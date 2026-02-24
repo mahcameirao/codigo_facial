@@ -44,7 +44,7 @@ const UploadPage = () => {
     setLoading(true);
     // Simulate processing
     setTimeout(() => {
-      navigate("/results");
+      navigate("/results", { state: { imageUrl: preview } });
     }, 3000);
   };
 
