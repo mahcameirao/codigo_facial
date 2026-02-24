@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { analyzeVisagism, type RawMeasurements, type ComparisonResult, type VisagismResult } from "@/lib/visagism-calculator";
+import FaceMeasurementsOverlay from "@/components/results/FaceMeasurementsOverlay";
 import { useMemo } from "react";
 
 // Medidas simuladas (em cm) — serão substituídas por dados reais da IA
@@ -255,6 +256,9 @@ const ResultsPage = () => {
                 </p>
               </div>
             </div>
+
+            {/* Face measurements overlay on photo */}
+            <FaceMeasurementsOverlay measurements={raw} />
 
             {/* Raw Measurements + Ideal Values side by side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
