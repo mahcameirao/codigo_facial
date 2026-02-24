@@ -101,16 +101,16 @@ const DraggablePoint = ({ id, point, meta, isActive, onDragStart }: DraggablePoi
     style={{ touchAction: "none" }}
   >
     {/* Hit area (larger invisible circle) */}
-    <circle cx={`${point.x}%`} cy={`${point.y}%`} r="8" fill="transparent" />
+    <circle cx={`${point.x}%`} cy={`${point.y}%`} r="5" fill="transparent" />
     {/* Outer ring */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "5" : "4"}
-      fill="none" stroke={meta.color} strokeWidth={isActive ? "2" : "1.5"}
+      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "3" : "2.5"}
+      fill="none" stroke={meta.color} strokeWidth={isActive ? "1.5" : "1"}
       opacity={isActive ? 1 : 0.7}
     />
     {/* Inner dot */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r="2"
+      cx={`${point.x}%`} cy={`${point.y}%`} r="1.2"
       fill={meta.color} opacity="0.9"
     />
     {/* Label on hover/active */}
@@ -323,6 +323,14 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
             viewBox={svgViewBox}
             preserveAspectRatio="xMidYMid meet"
           >
+            {/* Grid overlay */}
+            <defs>
+              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="hsl(var(--foreground))" strokeWidth="0.15" opacity="0.25" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+
             {/* Connection lines between related points */}
             <PointLine p1={points.leftEyeOuter} p2={points.leftEyeInner} color="hsl(var(--primary))" />
             <PointLine p1={points.leftEyeInner} p2={points.rightEyeInner} color="hsl(45, 80%, 60%)" />
