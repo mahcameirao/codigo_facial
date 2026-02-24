@@ -1,11 +1,12 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Download, Scissors, Glasses, Palette, Crown, Target, Percent, Ruler, Eye, Activity, Info, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { analyzeVisagism, type RawMeasurements, type ComparisonResult, type VisagismResult } from "@/lib/visagism-calculator";
 import FaceMeasurementsOverlay from "@/components/results/FaceMeasurementsOverlay";
-import { useMemo } from "react";
+import FacePointsEditor from "@/components/results/FacePointsEditor";
+import { useMemo, useState, useCallback } from "react";
 
 // Medidas simuladas (em cm) — serão substituídas por dados reais da IA
 const MOCK_RAW: RawMeasurements = {
@@ -206,10 +207,21 @@ function generateStyleSuggestions(result: VisagismResult) {
 
 const ResultsPage = () => {
   const navigate = useNavigate();
-  const result = useMemo(() => analyzeVisagism(MOCK_RAW), []);
+  const location = useLocation();
+  const imageUrl = (location.state as any)?.imageUrl as string | undefined;
+
+  const [rawMeasurements, setRawMeasurements] = useState<RawMeasurements>(MOCK_RAW);
+
+  const result = useMemo(() => analyzeVisagism(rawMeasurements), [rawMeasurements]);
   const suggestions = useMemo(() => generateStyleSuggestions(result), [result]);
 
   const { rawMeasurements: raw, idealValues: ideal, referenceLine, referenceLabel, comparisons, thirdsAnalysis } = result;
+
+  const handleRecalculate = useCallback((newMeasurements: RawMeasurements) => {
+    setRawMeasurements(newMeasurements);
+    // Scroll to top of results
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const refFaceWidth = referenceLine === "a" ? ideal.x : referenceLine === "b" ? ideal.y : ideal.z;
   const refFaceHeight = referenceLine === "a" ? ideal.d : referenceLine === "b" ? ideal.e : ideal.f;
@@ -257,8 +269,15 @@ const ResultsPage = () => {
               </div>
             </div>
 
-            {/* Face measurements overlay on photo */}
-            <FaceMeasurementsOverlay measurements={raw} />
+            {/* Draggable points editor (if photo available) or static overlay */}
+            {imageUrl ? (
+              <FacePointsEditor
+                imageUrl={imageUrl}
+                onRecalculate={handleRecalculate}
+              />
+            ) : (
+              <FaceMeasurementsOverlay measurements={raw} />
+            )}
 
             {/* Raw Measurements + Ideal Values side by side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
