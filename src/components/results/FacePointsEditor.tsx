@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { RefreshCw, Move, Info } from "lucide-react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { RefreshCw, Move, Info, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RawMeasurements } from "@/lib/visagism-calculator";
 
@@ -153,9 +153,24 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   const [points, setPoints] = useState<LandmarkPoints>(DEFAULT_LANDMARKS);
   const [activePoint, setActivePoint] = useState<keyof LandmarkPoints | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [imgAspect, setImgAspect] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
 
   const measurements = landmarksToMeasurements(points);
+
+  // Load image to get natural aspect ratio
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setImgAspect(img.naturalHeight / img.naturalWidth);
+    };
+    img.src = imageUrl;
+  }, [imageUrl]);
 
   const handleDragStart = useCallback((id: keyof LandmarkPoints) => {
     setActivePoint(id);
@@ -163,27 +178,62 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging || !activePoint || !containerRef.current) return;
+    if (!innerRef.current) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
+    // Handle panning
+    if (isPanning) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      setPan(prev => ({
+        x: Math.max(-(zoom - 1) * 50, Math.min((zoom - 1) * 50, prev.x + dx)),
+        y: Math.max(-(zoom - 1) * 50, Math.min((zoom - 1) * 50, prev.y + dy)),
+      }));
+      setPanStart({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
+    if (!isDragging || !activePoint) return;
+
+    const rect = innerRef.current.getBoundingClientRect();
     const x = Math.max(2, Math.min(98, ((e.clientX - rect.left) / rect.width) * 100));
     const y = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
 
     setPoints(prev => ({ ...prev, [activePoint]: { x, y } }));
-  }, [isDragging, activePoint]);
+  }, [isDragging, activePoint, isPanning, panStart, zoom]);
 
   const handlePointerUp = useCallback(() => {
     setIsDragging(false);
+    setIsPanning(false);
   }, []);
+
+  const handleMiddleDown = useCallback((e: React.PointerEvent) => {
+    // Middle mouse or when no point is being dragged and zoom > 1
+    if (e.button === 1 || (e.button === 0 && zoom > 1 && !activePoint)) {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+      e.preventDefault();
+    }
+  }, [zoom, activePoint]);
 
   // Global pointer up listener
   useEffect(() => {
     const handleGlobalUp = () => {
       setIsDragging(false);
+      setIsPanning(false);
     };
     window.addEventListener("pointerup", handleGlobalUp);
     return () => window.removeEventListener("pointerup", handleGlobalUp);
   }, []);
+
+  // Wheel zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom(prev => Math.max(1, Math.min(4, prev + (e.deltaY > 0 ? -0.2 : 0.2))));
+  }, []);
+
+  const zoomIn = () => setZoom(prev => Math.min(4, prev + 0.5));
+  const zoomOut = () => setZoom(prev => Math.max(1, prev - 0.5));
+  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
 
   const handleRecalculate = () => {
     onRecalculate(measurements);
@@ -193,6 +243,10 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
     setPoints(DEFAULT_LANDMARKS);
     setActivePoint(null);
   };
+
+  // Aspect ratio: use real image aspect or default 1.3
+  const aspectRatio = imgAspect ?? 1.3;
+  const svgViewBox = `0 0 100 ${100 * aspectRatio}`;
 
   return (
     <div className="rounded-2xl border border-border bg-card/50 p-6 mb-10">
@@ -216,46 +270,66 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
         </p>
       </div>
 
+      {/* Zoom controls */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <Button variant="heroOutline" size="sm" onClick={zoomOut} disabled={zoom <= 1} className="h-8 w-8 p-0">
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <span className="text-xs text-muted-foreground font-mono w-12 text-center">{Math.round(zoom * 100)}%</span>
+        <Button variant="heroOutline" size="sm" onClick={zoomIn} disabled={zoom >= 4} className="h-8 w-8 p-0">
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button variant="heroOutline" size="sm" onClick={resetView} className="h-8 w-8 p-0" disabled={zoom === 1}>
+          <Maximize className="h-4 w-4" />
+        </Button>
+        {zoom > 1 && (
+          <span className="text-[10px] text-muted-foreground ml-2">Scroll para zoom • Arraste fundo para mover</span>
+        )}
+      </div>
+
       <div
         ref={containerRef}
-        className="relative mx-auto select-none"
-        style={{ maxWidth: "420px", touchAction: "none" }}
+        className="relative mx-auto select-none overflow-hidden rounded-xl border border-border"
+        style={{ maxWidth: "500px", touchAction: "none" }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerDown={handleMiddleDown}
+        onWheel={handleWheel}
       >
-        <div className="relative w-full" style={{ paddingBottom: "130%" }}>
-          {/* Photo */}
-          <div className="absolute inset-0 rounded-xl overflow-hidden">
+        <div
+          ref={innerRef}
+          className="relative w-full transition-transform duration-100"
+          style={{
+            paddingBottom: `${aspectRatio * 100}%`,
+            transform: `scale(${zoom}) translate(${pan.x / zoom}%, ${pan.y / zoom}%)`,
+            transformOrigin: "center center",
+          }}
+        >
+          {/* Photo — object-contain to preserve aspect ratio */}
+          <div className="absolute inset-0 overflow-hidden">
             <img
               src={imageUrl}
               alt="Rosto para análise"
-              className="w-full h-full object-cover pointer-events-none"
+              className="w-full h-full object-contain pointer-events-none"
               draggable={false}
             />
             {/* Dark overlay for better point visibility */}
             <div className="absolute inset-0 bg-background/20" />
           </div>
 
-          {/* SVG with draggable points */}
+          {/* SVG with draggable points — matching image aspect */}
           <svg
             className="absolute inset-0 w-full h-full"
-            viewBox="0 0 100 130"
-            preserveAspectRatio="none"
+            viewBox={svgViewBox}
+            preserveAspectRatio="xMidYMid meet"
           >
             {/* Connection lines between related points */}
-            {/* Eye width (a) */}
             <PointLine p1={points.leftEyeOuter} p2={points.leftEyeInner} color="hsl(var(--primary))" />
-            {/* Interocular (b) */}
             <PointLine p1={points.leftEyeInner} p2={points.rightEyeInner} color="hsl(45, 80%, 60%)" />
-            {/* Right eye */}
             <PointLine p1={points.rightEyeInner} p2={points.rightEyeOuter} color="hsl(45, 80%, 60%)" />
-            {/* Nose width (c) */}
             <PointLine p1={points.noseLeft} p2={points.noseRight} color="hsl(200, 70%, 55%)" />
-            {/* Mouth width (l) */}
             <PointLine p1={points.mouthLeft} p2={points.mouthRight} color="hsl(340, 65%, 55%)" />
-            {/* Face width (k) */}
             <PointLine p1={points.faceLeft} p2={points.faceRight} color="hsl(var(--accent))" dashed />
-            {/* Vertical: thirds */}
             <PointLine p1={points.hairline} p2={points.browLine} color="hsl(45, 80%, 60%)" dashed />
             <PointLine p1={points.browLine} p2={points.noseBase} color="hsl(200, 70%, 55%)" dashed />
             <PointLine p1={points.noseBase} p2={points.chin} color="hsl(340, 65%, 55%)" dashed />
@@ -273,23 +347,23 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
             ))}
           </svg>
         </div>
+      </div>
 
-        {/* Live measurements preview */}
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          {[
-            { label: "Olho (a)", value: measurements.a, color: "text-primary" },
-            { label: "Entre olhos (b)", value: measurements.b, color: "text-[hsl(45,80%,60%)]" },
-            { label: "Nariz (c)", value: measurements.c, color: "text-[hsl(200,70%,55%)]" },
-            { label: "Altura (j)", value: measurements.j, color: "text-accent" },
-            { label: "Largura (k)", value: measurements.k, color: "text-accent" },
-            { label: "Boca (l)", value: measurements.l, color: "text-[hsl(340,65%,55%)]" },
-          ].map((m, i) => (
-            <div key={i} className="rounded-lg bg-secondary/30 p-2">
-              <p className="text-[10px] text-muted-foreground">{m.label}</p>
-              <p className={`text-sm font-bold ${m.color}`}>{m.value.toFixed(1)} cm</p>
-            </div>
-          ))}
-        </div>
+      {/* Live measurements preview */}
+      <div className="mt-4 mx-auto grid grid-cols-3 gap-2 text-center" style={{ maxWidth: "500px" }}>
+        {[
+          { label: "Olho (a)", value: measurements.a, color: "text-primary" },
+          { label: "Entre olhos (b)", value: measurements.b, color: "text-[hsl(45,80%,60%)]" },
+          { label: "Nariz (c)", value: measurements.c, color: "text-[hsl(200,70%,55%)]" },
+          { label: "Altura (j)", value: measurements.j, color: "text-accent" },
+          { label: "Largura (k)", value: measurements.k, color: "text-accent" },
+          { label: "Boca (l)", value: measurements.l, color: "text-[hsl(340,65%,55%)]" },
+        ].map((m, i) => (
+          <div key={i} className="rounded-lg bg-secondary/30 p-2">
+            <p className="text-[10px] text-muted-foreground">{m.label}</p>
+            <p className={`text-sm font-bold ${m.color}`}>{m.value.toFixed(1)} cm</p>
+          </div>
+        ))}
       </div>
 
       {/* Action buttons */}
