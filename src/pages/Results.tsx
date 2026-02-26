@@ -7,6 +7,7 @@ import { analyzeVisagism, type RawMeasurements, type ComparisonResult, type Visa
 import FaceMeasurementsOverlay from "@/components/results/FaceMeasurementsOverlay";
 import FacePointsEditor from "@/components/results/FacePointsEditor";
 import { useMemo, useState, useCallback } from "react";
+import logoMarcela from "@/assets/logo-marcela.png";
 
 // Medidas simuladas (em cm) — serão substituídas por dados reais da IA
 const MOCK_RAW: RawMeasurements = {
@@ -289,15 +290,15 @@ const ResultsPage = () => {
                   </div>
                   <h2 className="font-display text-lg font-semibold">Medidas do seu rosto</h2>
                 </div>
-                <MeasurementRow label="Distância dos olhos (a)" value={`${raw.a.toFixed(1)} cm`} />
-                <MeasurementRow label="Distância entre olhos (b)" value={`${raw.b.toFixed(1)} cm`} />
-                <MeasurementRow label="Largura do nariz (c)" value={`${raw.c.toFixed(1)} cm`} />
-                <MeasurementRow label="Altura do rosto (j)" value={`${raw.j.toFixed(1)} cm`} />
-                <MeasurementRow label="Largura do rosto (k)" value={`${raw.k.toFixed(1)} cm`} />
-                <MeasurementRow label="Largura da boca (l)" value={`${raw.l.toFixed(1)} cm`} />
-                <MeasurementRow label="Terço superior (m)" value={`${raw.m.toFixed(1)} cm`} />
-                <MeasurementRow label="Terço médio (n)" value={`${raw.n.toFixed(1)} cm`} />
-                <MeasurementRow label="Terço inferior (o)" value={`${raw.o.toFixed(1)} cm`} />
+                <MeasurementRow label="Distância dos olhos" value={`${raw.a.toFixed(1)} cm`} />
+                <MeasurementRow label="Distância entre olhos" value={`${raw.b.toFixed(1)} cm`} />
+                <MeasurementRow label="Largura do nariz" value={`${raw.c.toFixed(1)} cm`} />
+                <MeasurementRow label="Altura do rosto" value={`${raw.j.toFixed(1)} cm`} />
+                <MeasurementRow label="Largura do rosto" value={`${raw.k.toFixed(1)} cm`} />
+                <MeasurementRow label="Largura da boca" value={`${raw.l.toFixed(1)} cm`} />
+                <MeasurementRow label="Terço superior" value={`${raw.m.toFixed(1)} cm`} />
+                <MeasurementRow label="Terço médio" value={`${raw.n.toFixed(1)} cm`} />
+                <MeasurementRow label="Terço inferior" value={`${raw.o.toFixed(1)} cm`} />
               </div>
 
               {/* Ideal calculated values */}
@@ -373,6 +374,7 @@ const ResultsPage = () => {
 
             {/* CTA */}
             <div className="rounded-2xl border border-primary/30 bg-card p-8 text-center glow-gold">
+              <img src={logoMarcela} alt="Marcela Cameirão" className="h-16 mx-auto mb-4 opacity-80" />
               <h2 className="font-display text-2xl font-bold mb-2">Quer o relatório completo em PDF?</h2>
               <p className="text-muted-foreground mb-6">
                 Assine o plano Premium e tenha acesso ao relatório detalhado com todas as métricas e marcações faciais.
