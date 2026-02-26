@@ -100,31 +100,38 @@ const DraggablePoint = ({ id, point, meta, isActive, onDragStart }: DraggablePoi
     }}
     style={{ touchAction: "none" }}
   >
-    {/* Hit area (larger invisible circle) */}
+    {/* Hit area */}
     <circle cx={`${point.x}%`} cy={`${point.y}%`} r="5" fill="transparent" />
-    {/* Outer ring */}
+    {/* Outer ring — shrinks when active for precision */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "3" : "2.5"}
-      fill="none" stroke={meta.color} strokeWidth={isActive ? "1.5" : "1"}
+      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "1.5" : "2.5"}
+      fill="none" stroke={meta.color} strokeWidth={isActive ? "0.8" : "1"}
       opacity={isActive ? 1 : 0.7}
     />
-    {/* Inner dot */}
+    {/* Inner dot — shrinks when active */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r="1.2"
+      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "0.5" : "1.2"}
       fill={meta.color} opacity="0.9"
     />
-    {/* Label on hover/active */}
+    {/* Crosshair when active for precise placement */}
+    {isActive && (
+      <>
+        <line x1={`${point.x - 1.8}%`} y1={`${point.y}%`} x2={`${point.x + 1.8}%`} y2={`${point.y}%`} stroke={meta.color} strokeWidth="0.3" opacity="0.6" />
+        <line x1={`${point.x}%`} y1={`${point.y - 1.8}%`} x2={`${point.x}%`} y2={`${point.y + 1.8}%`} stroke={meta.color} strokeWidth="0.3" opacity="0.6" />
+      </>
+    )}
+    {/* Compact label */}
     {isActive && (
       <g>
         <rect
-          x={`${point.x + 2}%`} y={`${point.y - 4}%`}
-          width="16%" height="5%" rx="2"
-          fill="hsl(var(--background))" stroke={meta.color} strokeWidth="0.5"
-          opacity="0.95"
+          x={`${point.x + 1.5}%`} y={`${point.y - 3}%`}
+          width="12%" height="3.5%" rx="1.5"
+          fill="hsl(var(--background))" stroke={meta.color} strokeWidth="0.4"
+          opacity="0.92"
         />
         <text
-          x={`${point.x + 10}%`} y={`${point.y - 1.5}%`}
-          fill={meta.color} fontSize="4.5" textAnchor="middle"
+          x={`${point.x + 7.5}%`} y={`${point.y - 1.2}%`}
+          fill={meta.color} fontSize="3" textAnchor="middle"
           dominantBaseline="middle" fontFamily="var(--font-sans)" fontWeight="600"
         >
           {meta.label}
