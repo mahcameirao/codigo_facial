@@ -9,9 +9,9 @@ const Navbar = () => {
       <div className="container mx-auto px-6 flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <span className="text-primary font-display font-bold text-sm">V</span>
+            <span className="text-primary font-display font-bold text-sm">LF</span>
           </div>
-          <span className="font-display font-semibold text-lg">Visage AI</span>
+          <span className="font-display font-semibold text-lg">Leitura Facial</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
