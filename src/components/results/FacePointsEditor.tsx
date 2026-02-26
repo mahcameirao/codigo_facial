@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { RefreshCw, Move, Info, ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import { RefreshCw, Move, Info, ZoomIn, ZoomOut, Maximize, Ruler, RotateCw, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RawMeasurements } from "@/lib/visagism-calculator";
 
@@ -165,6 +165,10 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [imgAspect, setImgAspect] = useState<number | null>(null);
+  const [rotation, setRotation] = useState(0);
+  const [showRuler, setShowRuler] = useState(false);
+  const [rulerY, setRulerY] = useState(50); // ruler position in %
+  const [isDraggingRuler, setIsDraggingRuler] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
 
@@ -187,6 +191,14 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!innerRef.current) return;
 
+    // Handle ruler dragging
+    if (isDraggingRuler && showRuler) {
+      const rect = innerRef.current.getBoundingClientRect();
+      const y = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
+      setRulerY(y);
+      return;
+    }
+
     // Handle panning
     if (isPanning) {
       const dx = e.clientX - panStart.x;
@@ -206,11 +218,12 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
     const y = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
 
     setPoints(prev => ({ ...prev, [activePoint]: { x, y } }));
-  }, [isDragging, activePoint, isPanning, panStart, zoom]);
+  }, [isDragging, activePoint, isPanning, panStart, zoom, isDraggingRuler, showRuler]);
 
   const handlePointerUp = useCallback(() => {
     setIsDragging(false);
     setIsPanning(false);
+    setIsDraggingRuler(false);
   }, []);
 
   const handleMiddleDown = useCallback((e: React.PointerEvent) => {
@@ -227,6 +240,7 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
     const handleGlobalUp = () => {
       setIsDragging(false);
       setIsPanning(false);
+      setIsDraggingRuler(false);
     };
     window.addEventListener("pointerup", handleGlobalUp);
     return () => window.removeEventListener("pointerup", handleGlobalUp);
@@ -240,7 +254,10 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
 
   const zoomIn = () => setZoom(prev => Math.min(4, prev + 0.5));
   const zoomOut = () => setZoom(prev => Math.max(1, prev - 0.5));
-  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); setRotation(0); };
+  const rotateLeft = () => setRotation(prev => prev - 1);
+  const rotateRight = () => setRotation(prev => prev + 1);
+  const toggleRuler = () => setShowRuler(prev => !prev);
 
   const handleRecalculate = () => {
     onRecalculate(measurements);
@@ -277,8 +294,8 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
         </p>
       </div>
 
-      {/* Zoom controls */}
-      <div className="flex items-center justify-center gap-2 mb-4">
+      {/* Toolbar */}
+      <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
         <Button variant="heroOutline" size="sm" onClick={zoomOut} disabled={zoom <= 1} className="h-8 w-8 p-0">
           <ZoomOut className="h-4 w-4" />
         </Button>
@@ -286,12 +303,32 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
         <Button variant="heroOutline" size="sm" onClick={zoomIn} disabled={zoom >= 4} className="h-8 w-8 p-0">
           <ZoomIn className="h-4 w-4" />
         </Button>
-        <Button variant="heroOutline" size="sm" onClick={resetView} className="h-8 w-8 p-0" disabled={zoom === 1}>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        <Button variant="heroOutline" size="sm" onClick={rotateLeft} className="h-8 w-8 p-0" title="Girar esquerda">
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+        <span className="text-xs text-muted-foreground font-mono w-10 text-center">{rotation}°</span>
+        <Button variant="heroOutline" size="sm" onClick={rotateRight} className="h-8 w-8 p-0" title="Girar direita">
+          <RotateCw className="h-4 w-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        <Button
+          variant={showRuler ? "hero" : "heroOutline"}
+          size="sm"
+          onClick={toggleRuler}
+          className="h-8 w-8 p-0"
+          title="Régua horizontal"
+        >
+          <Ruler className="h-4 w-4" />
+        </Button>
+
+        <Button variant="heroOutline" size="sm" onClick={resetView} className="h-8 w-8 p-0" disabled={zoom === 1 && rotation === 0}>
           <Maximize className="h-4 w-4" />
         </Button>
-        {zoom > 1 && (
-          <span className="text-[10px] text-muted-foreground ml-2">Scroll para zoom • Arraste fundo para mover</span>
-        )}
       </div>
 
       <div
@@ -308,7 +345,7 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
           className="relative w-full transition-transform duration-100"
           style={{
             paddingBottom: `${aspectRatio * 100}%`,
-            transform: `scale(${zoom}) translate(${pan.x / zoom}%, ${pan.y / zoom}%)`,
+            transform: `scale(${zoom}) translate(${pan.x / zoom}%, ${pan.y / zoom}%) rotate(${rotation}deg)`,
             transformOrigin: "center center",
           }}
         >
@@ -360,6 +397,44 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
                 onDragStart={handleDragStart}
               />
             ))}
+
+            {/* Horizontal ruler */}
+            {showRuler && (
+              <g>
+                <line
+                  x1="0" y1={`${rulerY}%`}
+                  x2="100%" y2={`${rulerY}%`}
+                  stroke="hsl(var(--primary))" strokeWidth="0.5" opacity="0.8"
+                  strokeDasharray="2 1"
+                />
+                {/* Ruler drag handle */}
+                <rect
+                  x="0" y={`${rulerY - 0.8}%`}
+                  width="100%" height="1.6%"
+                  fill="transparent"
+                  className="cursor-ns-resize"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingRuler(true);
+                  }}
+                  style={{ touchAction: "none" }}
+                />
+                {/* Position indicator */}
+                <rect
+                  x="0.5%" y={`${rulerY - 1.8}%`}
+                  width="5%" height="1.8%" rx="0.5"
+                  fill="hsl(var(--primary))" opacity="0.8"
+                />
+                <text
+                  x="3%" y={`${rulerY - 0.9}%`}
+                  fill="hsl(var(--primary-foreground))" fontSize="1.5" textAnchor="middle"
+                  dominantBaseline="middle" fontFamily="var(--font-sans)" fontWeight="700"
+                >
+                  {rulerY.toFixed(0)}%
+                </text>
+              </g>
+            )}
           </svg>
         </div>
       </div>
