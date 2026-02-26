@@ -102,36 +102,36 @@ const DraggablePoint = ({ id, point, meta, isActive, onDragStart }: DraggablePoi
   >
     {/* Hit area */}
     <circle cx={`${point.x}%`} cy={`${point.y}%`} r="5" fill="transparent" />
-    {/* Outer ring — shrinks when active for precision */}
+    {/* Outer ring */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "1.5" : "2.5"}
-      fill="none" stroke={meta.color} strokeWidth={isActive ? "0.8" : "1"}
+      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "1.5" : "1.5"}
+      fill="none" stroke={meta.color} strokeWidth={isActive ? "0.8" : "0.8"}
       opacity={isActive ? 1 : 0.7}
     />
-    {/* Inner dot — shrinks when active */}
+    {/* Inner dot */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "0.5" : "1.2"}
+      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "0.5" : "0.5"}
       fill={meta.color} opacity="0.9"
     />
-    {/* Crosshair when active for precise placement */}
+    {/* Crosshair when active */}
     {isActive && (
       <>
         <line x1={`${point.x - 1.8}%`} y1={`${point.y}%`} x2={`${point.x + 1.8}%`} y2={`${point.y}%`} stroke={meta.color} strokeWidth="0.3" opacity="0.6" />
         <line x1={`${point.x}%`} y1={`${point.y - 1.8}%`} x2={`${point.x}%`} y2={`${point.y + 1.8}%`} stroke={meta.color} strokeWidth="0.3" opacity="0.6" />
       </>
     )}
-    {/* Compact label */}
+    {/* Label */}
     {isActive && (
       <g>
         <rect
-          x={`${point.x + 1.5}%`} y={`${point.y - 3}%`}
-          width="12%" height="3.5%" rx="1.5"
-          fill="hsl(var(--background))" stroke={meta.color} strokeWidth="0.4"
+          x={`${point.x + 1.2}%`} y={`${point.y - 2.2}%`}
+          width="8%" height="2.5%" rx="1"
+          fill="hsl(var(--background))" stroke={meta.color} strokeWidth="0.3"
           opacity="0.92"
         />
         <text
-          x={`${point.x + 7.5}%`} y={`${point.y - 1.2}%`}
-          fill={meta.color} fontSize="3" textAnchor="middle"
+          x={`${point.x + 5.2}%`} y={`${point.y - 0.9}%`}
+          fill={meta.color} fontSize="2" textAnchor="middle"
           dominantBaseline="middle" fontFamily="var(--font-sans)" fontWeight="600"
         >
           {meta.label}
