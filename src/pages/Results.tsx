@@ -249,6 +249,16 @@ const ResultsPage = () => {
               <p className="text-muted-foreground">Cálculos baseados em proporção áurea (1.618) e visagismo clássico</p>
             </div>
 
+            {/* Draggable points editor (if photo available) or static overlay */}
+            {imageUrl ? (
+              <FacePointsEditor
+                imageUrl={imageUrl}
+                onRecalculate={handleRecalculate}
+              />
+            ) : (
+              <FaceMeasurementsOverlay measurements={raw} />
+            )}
+
             {/* Main metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
               <MetricCard icon={Crown} label="Formato do Rosto" value={result.faceShape} tooltip="Classificação baseada nas relações entre largura, altura e terços faciais" />
@@ -269,16 +279,6 @@ const ResultsPage = () => {
               </div>
             </div>
 
-            {/* Draggable points editor (if photo available) or static overlay */}
-            {imageUrl ? (
-              <FacePointsEditor
-                imageUrl={imageUrl}
-                onRecalculate={handleRecalculate}
-              />
-            ) : (
-              <FaceMeasurementsOverlay measurements={raw} />
-            )}
-
             {/* Raw Measurements + Ideal Values side by side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
               {/* Raw measurements */}
@@ -287,7 +287,7 @@ const ResultsPage = () => {
                   <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Ruler className="h-5 w-5 text-primary" />
                   </div>
-                  <h2 className="font-display text-lg font-semibold">Medidas Reais</h2>
+                  <h2 className="font-display text-lg font-semibold">Medidas do seu rosto</h2>
                 </div>
                 <MeasurementRow label="Distância dos olhos (a)" value={`${raw.a.toFixed(1)} cm`} />
                 <MeasurementRow label="Distância entre olhos (b)" value={`${raw.b.toFixed(1)} cm`} />
@@ -306,17 +306,17 @@ const ResultsPage = () => {
                   <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center">
                     <Target className="h-5 w-5 text-accent" />
                   </div>
-                  <h2 className="font-display text-lg font-semibold">Valores Ideais Calculados</h2>
+                  <h2 className="font-display text-lg font-semibold">Medidas Ideais</h2>
                 </div>
-                <IdealRow label="Largura rosto (a×4)" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.x.toFixed(1)}`} />
-                <IdealRow label="Altura rosto (a×4×1.618)" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.d.toFixed(1)}`} />
-                <IdealRow label="Boca (a×1.5)" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.g.toFixed(1)}`} />
-                <IdealRow label="Largura rosto (b×4)" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.y.toFixed(1)}`} />
-                <IdealRow label="Altura rosto (b×4×1.618)" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.e.toFixed(1)}`} />
-                <IdealRow label="Boca (b×1.5)" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.h.toFixed(1)}`} />
-                <IdealRow label="Largura rosto (c×4)" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.z.toFixed(1)}`} />
-                <IdealRow label="Altura rosto (c×4×1.618)" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.f.toFixed(1)}`} />
-                <IdealRow label="Boca (c×1.5)" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.i.toFixed(1)}`} />
+                <IdealRow label="Largura rosto" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.x.toFixed(1)}`} />
+                <IdealRow label="Altura rosto" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.d.toFixed(1)}`} />
+                <IdealRow label="Boca" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.g.toFixed(1)}`} />
+                <IdealRow label="Largura rosto" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.y.toFixed(1)}`} />
+                <IdealRow label="Altura rosto" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.e.toFixed(1)}`} />
+                <IdealRow label="Boca" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.h.toFixed(1)}`} />
+                <IdealRow label="Largura rosto" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.z.toFixed(1)}`} />
+                <IdealRow label="Altura rosto" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.f.toFixed(1)}`} />
+                <IdealRow label="Boca" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.i.toFixed(1)}`} />
               </div>
             </div>
 
