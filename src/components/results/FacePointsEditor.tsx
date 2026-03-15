@@ -324,7 +324,7 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   // Wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    setZoom(prev => Math.max(1, Math.min(4, prev + (e.deltaY > 0 ? -0.2 : 0.2))));
+    setZoom(prev => Math.max(1, Math.min(4, prev + (e.deltaY > 0 ? -0.1 : 0.1))));
   }, []);
 
   const visibleBounds = useMemo(() => {
@@ -341,8 +341,8 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
     };
   }, [zoom, pan]);
 
-  const zoomIn = () => setZoom(prev => Math.min(4, prev + 0.5));
-  const zoomOut = () => setZoom(prev => Math.max(1, prev - 0.5));
+  const zoomIn = () => setZoom(prev => Math.min(4, prev + 0.1));
+  const zoomOut = () => setZoom(prev => Math.max(1, prev - 0.1));
   const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); setRotation(0); };
   const rotateLeft = () => setRotation(prev => prev - 1);
   const rotateRight = () => setRotation(prev => prev + 1);
