@@ -6,7 +6,7 @@ import heroImage from "@/assets/hero-face.png";
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { session } = useAuth();
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -41,7 +41,7 @@ const HeroSection = () => {
               variant="hero"
               size="lg"
               className="text-base px-8 py-6"
-              onClick={() => navigate(token ? "/upload" : "/register")}
+              onClick={() => navigate(session ? "/upload" : "/register")}
             >
               Fazer minha análise
               <ArrowRight className="ml-2 h-5 w-5" />

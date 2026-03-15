@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { profile, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -23,10 +23,10 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {user ? (
+          {profile ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:inline">Olá, {user.name.split(' ')[0]}</span>
-              <Button variant="outline" size="sm" onClick={logout}>
+              <span className="text-sm text-muted-foreground hidden sm:inline">Olá, {profile.name.split(' ')[0]}</span>
+              <Button variant="outline" size="sm" onClick={signOut}>
                 Sair
               </Button>
             </div>

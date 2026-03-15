@@ -42,7 +42,7 @@ const plans = [
 
 const PricingSection = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { session, profile } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (planName: string) => {
@@ -51,13 +51,13 @@ const PricingSection = () => {
       return;
     }
 
-    if (!user) {
+    if (!session) {
       toast.info("Faça login para assinar o plano Pro");
       navigate("/register");
       return;
     }
 
-    if (user?.plan === "pro") {
+    if (false) { // TODO: implement plan check via profiles table
       toast.success("Você já possui o plano Pro!");
       return;
     }
