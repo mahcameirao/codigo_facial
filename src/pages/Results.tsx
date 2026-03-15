@@ -234,7 +234,7 @@ const ResultsPage = () => {
   const { user } = useAuth();
   const imageUrl = (location.state as any)?.imageUrl as string | undefined;
 
-  const isFree = user?.plan !== "pro";
+  const isFree = true; // TODO: implement plan check via profiles table
 
   const [rawMeasurements, setRawMeasurements] = useState<RawMeasurements>(MOCK_RAW);
 

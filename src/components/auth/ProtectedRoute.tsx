@@ -8,7 +8,7 @@ const ProtectedRoute = () => {
         return <div className="min-h-screen flex items-center justify-center bg-background text-primary">Carregando...</div>;
     }
 
-    if (!token) {
+    if (!session) {
         return <Navigate to="/login" replace />;
     }
 

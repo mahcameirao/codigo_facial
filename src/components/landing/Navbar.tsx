@@ -23,10 +23,10 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {user ? (
+          {profile ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:inline">Olá, {user.name.split(' ')[0]}</span>
-              <Button variant="outline" size="sm" onClick={logout}>
+              <span className="text-sm text-muted-foreground hidden sm:inline">Olá, {profile.name.split(' ')[0]}</span>
+              <Button variant="outline" size="sm" onClick={signOut}>
                 Sair
               </Button>
             </div>
