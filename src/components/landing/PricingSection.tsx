@@ -51,7 +51,7 @@ const PricingSection = () => {
       return;
     }
 
-    if (!user) {
+    if (!session) {
       toast.info("Faça login para assinar o plano Pro");
       navigate("/register");
       return;
