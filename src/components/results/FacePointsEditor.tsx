@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { RefreshCw, Move, Info, ZoomIn, ZoomOut, Maximize, Ruler, RotateCw, RotateCcw } from "lucide-react";
+import { RefreshCw, Move, Info, ZoomIn, ZoomOut, Maximize, Ruler, RotateCw, RotateCcw, Loader2 } from "lucide-react";
+import * as faceapi from '@vladmandic/face-api';
 import { Button } from "@/components/ui/button";
 import type { RawMeasurements } from "@/lib/visagism-calculator";
 
@@ -88,9 +89,11 @@ interface DraggablePointProps {
   meta: { label: string; color: string };
   isActive: boolean;
   onDragStart: (id: keyof LandmarkPoints) => void;
+  zoom?: number;
+  isClamped?: boolean;
 }
 
-const DraggablePoint = ({ id, point, meta, isActive, onDragStart }: DraggablePointProps) => (
+const DraggablePoint = ({ id, point, meta, isActive, onDragStart, zoom = 1, isClamped = false }: DraggablePointProps) => (
   <g
     className="cursor-grab active:cursor-grabbing"
     onPointerDown={(e) => {
@@ -101,40 +104,42 @@ const DraggablePoint = ({ id, point, meta, isActive, onDragStart }: DraggablePoi
     style={{ touchAction: "none" }}
   >
     {/* Hit area */}
-    <circle cx={`${point.x}%`} cy={`${point.y}%`} r="5" fill="transparent" />
+    <circle cx={`${point.x}%`} cy={`${point.y}%`} r={12 / zoom} fill="transparent" />
     {/* Outer ring */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "1.5" : "1.5"}
-      fill="none" stroke={meta.color} strokeWidth={isActive ? "0.8" : "0.8"}
-      opacity={isActive ? 1 : 0.7}
+      cx={`${point.x}%`} cy={`${point.y}%`} r={(isClamped ? 2.5 : 1.5) / zoom}
+      fill={isClamped ? "hsl(var(--background))" : "none"}
+      stroke={meta.color} strokeWidth={(isClamped ? 1.0 : 0.8) / zoom}
+      opacity={1}
+      strokeDasharray={isClamped ? `${1.5 / zoom} ${1.5 / zoom}` : "none"}
     />
     {/* Inner dot */}
     <circle
-      cx={`${point.x}%`} cy={`${point.y}%`} r={isActive ? "0.5" : "0.5"}
-      fill={meta.color} opacity="0.9"
+      cx={`${point.x}%`} cy={`${point.y}%`} r={(isActive || isClamped) ? 0.8 / zoom : 0.5 / zoom}
+      fill={meta.color} opacity="1"
     />
     {/* Crosshair when active */}
     {isActive && (
       <>
-        <line x1={`${point.x - 1.8}%`} y1={`${point.y}%`} x2={`${point.x + 1.8}%`} y2={`${point.y}%`} stroke={meta.color} strokeWidth="0.3" opacity="0.6" />
-        <line x1={`${point.x}%`} y1={`${point.y - 1.8}%`} x2={`${point.x}%`} y2={`${point.y + 1.8}%`} stroke={meta.color} strokeWidth="0.3" opacity="0.6" />
+        <line x1={`${point.x - 1.8 / zoom}%`} y1={`${point.y}%`} x2={`${point.x + 1.8 / zoom}%`} y2={`${point.y}%`} stroke={meta.color} strokeWidth={0.3 / zoom} opacity="0.6" />
+        <line x1={`${point.x}%`} y1={`${point.y - 1.8 / zoom}%`} x2={`${point.x}%`} y2={`${point.y + 1.8 / zoom}%`} stroke={meta.color} strokeWidth={0.3 / zoom} opacity="0.6" />
       </>
     )}
     {/* Label */}
-    {isActive && (
+    {(isActive || isClamped) && (
       <g>
         <rect
-          x={`${point.x + 1.2}%`} y={`${point.y - 2.2}%`}
-          width="8%" height="2.5%" rx="1"
-          fill="hsl(var(--background))" stroke={meta.color} strokeWidth="0.3"
-          opacity="0.92"
+          x={`${point.x + 1.5 / zoom}%`} y={`${point.y - (isClamped ? 3.5 : 2.5) / zoom}%`}
+          width={`${isClamped ? 12 : 8} / zoom}%`} height={`${3 / zoom}%`} rx={1 / zoom}
+          fill="hsl(var(--foreground))" stroke={meta.color} strokeWidth={0.3 / zoom}
+          opacity="0.95"
         />
         <text
-          x={`${point.x + 5.2}%`} y={`${point.y - 0.9}%`}
-          fill={meta.color} fontSize="2" textAnchor="middle"
-          dominantBaseline="middle" fontFamily="var(--font-sans)" fontWeight="600"
+          x={`${point.x + (isClamped ? 7.5 : 5.5) / zoom}%`} y={`${point.y - (isClamped ? 2 : 1) / zoom}%`}
+          fill="hsl(var(--background))" fontSize={2 / zoom} textAnchor="middle"
+          dominantBaseline="middle" fontFamily="var(--font-sans)" fontWeight="700"
         >
-          {meta.label}
+          {meta.label} {isClamped ? "(Solto)" : ""}
         </text>
       </g>
     )}
@@ -142,11 +147,11 @@ const DraggablePoint = ({ id, point, meta, isActive, onDragStart }: DraggablePoi
 );
 
 // Measurement line between two points
-const PointLine = ({ p1, p2, color, dashed = false }: { p1: { x: number; y: number }; p2: { x: number; y: number }; color: string; dashed?: boolean }) => (
+const PointLine = ({ p1, p2, color, dashed = false, zoom = 1 }: { p1: { x: number; y: number }; p2: { x: number; y: number }; color: string; dashed?: boolean; zoom?: number }) => (
   <line
     x1={`${p1.x}%`} y1={`${p1.y}%`}
     x2={`${p2.x}%`} y2={`${p2.y}%`}
-    stroke={color} strokeWidth="1" strokeDasharray={dashed ? "3 2" : "none"} opacity="0.5"
+    stroke={color} strokeWidth={1 / zoom} strokeDasharray={dashed ? `${3 / zoom} ${2 / zoom}` : "none"} opacity="0.5"
   />
 );
 
@@ -169,18 +174,60 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   const [showRuler, setShowRuler] = useState(false);
   const [rulerY, setRulerY] = useState(50); // ruler position in %
   const [isDraggingRuler, setIsDraggingRuler] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
 
   const measurements = landmarksToMeasurements(points);
 
-  // Load image to get natural aspect ratio
+  // Load image to get natural aspect ratio and auto-detect face
   useEffect(() => {
     const img = new Image();
-    img.onload = () => {
+    img.crossOrigin = 'anonymous';
+    img.onload = async () => {
       setImgAspect(img.naturalHeight / img.naturalWidth);
+
+      try {
+        setIsDetecting(true);
+        await faceapi.nets.tinyFaceDetector.loadFromUri('https://vladmandic.github.io/face-api/model/');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('https://vladmandic.github.io/face-api/model/');
+
+        const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+        if (detection) {
+          const w = img.naturalWidth;
+          const h = img.naturalHeight;
+          const pts = detection.landmarks.positions;
+          const toPct = (pt: { x: number, y: number }) => ({ x: (pt.x / w) * 100, y: (pt.y / h) * 100 });
+          const bbox = detection.alignedRect.box;
+
+          const detectedMarks: LandmarkPoints = {
+            leftEyeOuter: toPct(pts[36]),
+            leftEyeInner: toPct(pts[39]),
+            rightEyeInner: toPct(pts[42]),
+            rightEyeOuter: toPct(pts[45]),
+            noseLeft: toPct(pts[31]),
+            noseRight: toPct(pts[35]),
+            mouthLeft: toPct(pts[48]),
+            mouthRight: toPct(pts[54]),
+            faceLeft: toPct(pts[0]),
+            faceRight: toPct(pts[16]),
+            chin: toPct(pts[8]),
+            hairline: { x: toPct(pts[27]).x, y: Math.max(0, (bbox.y / h) * 100) },
+            browLine: toPct({ x: (pts[19].x + pts[24].x) / 2, y: (pts[19].y + pts[24].y) / 2 }),
+            noseBase: toPct(pts[33])
+          };
+
+          setPoints(detectedMarks);
+          onRecalculate(landmarksToMeasurements(detectedMarks));
+        }
+      } catch (e) {
+        console.error("Auto detect failed", e);
+      } finally {
+        setIsDetecting(false);
+      }
     };
     img.src = imageUrl;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imageUrl]);
 
   const handleDragStart = useCallback((id: keyof LandmarkPoints) => {
@@ -193,9 +240,11 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
 
     // Handle ruler dragging
     if (isDraggingRuler && showRuler) {
-      const rect = innerRef.current.getBoundingClientRect();
-      const y = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
-      setRulerY(y);
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+        setRulerY(y);
+      }
       return;
     }
 
@@ -204,8 +253,8 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
       const dx = e.clientX - panStart.x;
       const dy = e.clientY - panStart.y;
       setPan(prev => ({
-        x: Math.max(-(zoom - 1) * 50, Math.min((zoom - 1) * 50, prev.x + dx)),
-        y: Math.max(-(zoom - 1) * 50, Math.min((zoom - 1) * 50, prev.y + dy)),
+        x: Math.max(-(zoom - 1) * 50, Math.min((zoom - 1) * 50, prev.x + dx / zoom)),
+        y: Math.max(-(zoom - 1) * 50, Math.min((zoom - 1) * 50, prev.y + dy / zoom)),
       }));
       setPanStart({ x: e.clientX, y: e.clientY });
       return;
@@ -213,12 +262,38 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
 
     if (!isDragging || !activePoint) return;
 
-    const rect = innerRef.current.getBoundingClientRect();
-    const x = Math.max(2, Math.min(98, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      // O evento de mouse nos dá a posição na tela. 
+      // Subtrai-se as bordas (rect.left/top) para achar o Ponto X e Y relativo à div contêiner.
+      const rawX = e.clientX - rect.left;
+      const rawY = e.clientY - rect.top;
 
-    setPoints(prev => ({ ...prev, [activePoint]: { x, y } }));
-  }, [isDragging, activePoint, isPanning, panStart, zoom, isDraggingRuler, showRuler]);
+      // Precisamos reverter a matemática do transform CSS: translate e scale (zoom).
+      // Transform aplicado: translate(pan.X, pan.Y) scale(zoom)
+      // Largura virtual da imagem em pixels
+      const vWidth = rect.width * zoom;
+      const vHeight = rect.height * zoom;
+
+      // Deslocamento do panning (em pixels relativas à tela original)
+      const panPxX = (pan.x / 100) * rect.width;
+      const panPxY = (pan.y / 100) * rect.height;
+
+      // Achar onde seria o top/left do canvas transformado
+      const leftEdge = (rect.width - vWidth) / 2 + panPxX;
+      const topEdge = (rect.height - vHeight) / 2 + panPxY;
+
+      // Achar a coordenada no canvas e converter para %.
+      const xPct = ((rawX - leftEdge) / vWidth) * 100;
+      const yPct = ((rawY - topEdge) / vHeight) * 100;
+
+      // Travar os pontos dentro da imagem para não passarem da borda
+      const boundedX = Math.max(0, Math.min(100, xPct));
+      const boundedY = Math.max(0, Math.min(100, yPct));
+
+      setPoints(prev => ({ ...prev, [activePoint]: { x: boundedX, y: boundedY } }));
+    }
+  }, [isDragging, activePoint, isPanning, panStart, zoom, pan, isDraggingRuler, showRuler]);
 
   const handlePointerUp = useCallback(() => {
     setIsDragging(false);
@@ -252,6 +327,20 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
     setZoom(prev => Math.max(1, Math.min(4, prev + (e.deltaY > 0 ? -0.2 : 0.2))));
   }, []);
 
+  const visibleBounds = useMemo(() => {
+    const minX = ((zoom - 1) * 50 - pan.x) / zoom;
+    const maxX = 100 / zoom + minX;
+    const minY = ((zoom - 1) * 50 - pan.y) / zoom;
+    const maxY = 100 / zoom + minY;
+
+    return {
+      minX: minX + 5 / zoom,
+      maxX: maxX - 5 / zoom,
+      minY: minY + 5 / zoom,
+      maxY: maxY - 5 / zoom,
+    };
+  }, [zoom, pan]);
+
   const zoomIn = () => setZoom(prev => Math.min(4, prev + 0.5));
   const zoomOut = () => setZoom(prev => Math.max(1, prev - 0.5));
   const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); setRotation(0); };
@@ -277,11 +366,19 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Move className="h-5 w-5 text-primary" />
+            {isDetecting ? (
+              <Loader2 className="h-5 w-5 text-primary animate-spin" />
+            ) : (
+              <Move className="h-5 w-5 text-primary" />
+            )}
           </div>
           <div>
-            <h2 className="font-display text-xl font-semibold">Ajuste os Pontos de Medida</h2>
-            <p className="text-xs text-muted-foreground">Arraste os pontos para alinhar com seu rosto</p>
+            <h2 className="font-display text-xl font-semibold">
+              {isDetecting ? "Detectando rosto na IA..." : "Ajuste os Pontos de Medida"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {isDetecting ? "Aguarde enquanto os pontos são pré-posicionados" : "Arraste os pontos para alinhar com seu rosto"}
+            </p>
           </div>
         </div>
       </div>
@@ -345,7 +442,8 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
           className="relative w-full transition-transform duration-100"
           style={{
             paddingBottom: `${aspectRatio * 100}%`,
-            transform: `scale(${zoom}) translate(${pan.x / zoom}%, ${pan.y / zoom}%) rotate(${rotation}deg)`,
+            width: "100%",
+            transform: `translate(${pan.x}%, ${pan.y}%) scale(${zoom}) rotate(${rotation}deg)`,
             transformOrigin: "center center",
           }}
         >
@@ -367,76 +465,93 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
             viewBox={svgViewBox}
             preserveAspectRatio="xMidYMid meet"
           >
-            {/* Grid overlay */}
-            <defs>
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="hsl(var(--foreground))" strokeWidth="0.15" opacity="0.25" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-
             {/* Connection lines between related points */}
-            <PointLine p1={points.leftEyeOuter} p2={points.leftEyeInner} color="hsl(var(--primary))" />
-            <PointLine p1={points.leftEyeInner} p2={points.rightEyeInner} color="hsl(45, 80%, 60%)" />
-            <PointLine p1={points.rightEyeInner} p2={points.rightEyeOuter} color="hsl(45, 80%, 60%)" />
-            <PointLine p1={points.noseLeft} p2={points.noseRight} color="hsl(200, 70%, 55%)" />
-            <PointLine p1={points.mouthLeft} p2={points.mouthRight} color="hsl(340, 65%, 55%)" />
-            <PointLine p1={points.faceLeft} p2={points.faceRight} color="hsl(var(--accent))" dashed />
-            <PointLine p1={points.hairline} p2={points.browLine} color="hsl(45, 80%, 60%)" dashed />
-            <PointLine p1={points.browLine} p2={points.noseBase} color="hsl(200, 70%, 55%)" dashed />
-            <PointLine p1={points.noseBase} p2={points.chin} color="hsl(340, 65%, 55%)" dashed />
+            <PointLine p1={points.leftEyeOuter} p2={points.leftEyeInner} color="hsl(var(--primary))" zoom={zoom} />
+            <PointLine p1={points.leftEyeInner} p2={points.rightEyeInner} color="hsl(45, 80%, 60%)" zoom={zoom} />
+            <PointLine p1={points.rightEyeInner} p2={points.rightEyeOuter} color="hsl(45, 80%, 60%)" zoom={zoom} />
+            <PointLine p1={points.noseLeft} p2={points.noseRight} color="hsl(200, 70%, 55%)" zoom={zoom} />
+            <PointLine p1={points.mouthLeft} p2={points.mouthRight} color="hsl(340, 65%, 55%)" zoom={zoom} />
+            <PointLine p1={points.faceLeft} p2={points.faceRight} color="hsl(var(--accent))" dashed zoom={zoom} />
+            <PointLine p1={points.hairline} p2={points.browLine} color="hsl(45, 80%, 60%)" dashed zoom={zoom} />
+            <PointLine p1={points.browLine} p2={points.noseBase} color="hsl(200, 70%, 55%)" dashed zoom={zoom} />
+            <PointLine p1={points.noseBase} p2={points.chin} color="hsl(340, 65%, 55%)" dashed zoom={zoom} />
 
             {/* Draggable points */}
-            {(Object.entries(points) as [keyof LandmarkPoints, { x: number; y: number }][]).map(([id, point]) => (
-              <DraggablePoint
-                key={id}
-                id={id}
-                point={point}
-                meta={POINT_META[id]}
-                isActive={activePoint === id}
-                onDragStart={handleDragStart}
-              />
-            ))}
+            {(Object.entries(points) as [keyof LandmarkPoints, { x: number; y: number }][]).map(([id, point]) => {
+              const isClampedX = point.x < visibleBounds.minX || point.x > visibleBounds.maxX;
+              const isClampedY = point.y < visibleBounds.minY || point.y > visibleBounds.maxY;
+              const isClamped = isClampedX || isClampedY;
 
-            {/* Horizontal ruler */}
-            {showRuler && (
-              <g>
-                <line
-                  x1="0" y1={`${rulerY}%`}
-                  x2="100%" y2={`${rulerY}%`}
-                  stroke="hsl(var(--primary))" strokeWidth="0.5" opacity="0.8"
-                  strokeDasharray="2 1"
+              const visualPoint = {
+                x: Math.max(visibleBounds.minX, Math.min(visibleBounds.maxX, point.x)),
+                y: Math.max(visibleBounds.minY, Math.min(visibleBounds.maxY, point.y))
+              };
+
+              return (
+                <DraggablePoint
+                  key={id}
+                  id={id}
+                  point={visualPoint}
+                  meta={POINT_META[id]}
+                  isActive={activePoint === id}
+                  onDragStart={handleDragStart}
+                  zoom={zoom}
+                  isClamped={isClamped}
                 />
-                {/* Ruler drag handle */}
-                <rect
-                  x="0" y={`${rulerY - 0.8}%`}
-                  width="100%" height="1.6%"
-                  fill="transparent"
-                  className="cursor-ns-resize"
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsDraggingRuler(true);
-                  }}
-                  style={{ touchAction: "none" }}
-                />
-                {/* Position indicator */}
-                <rect
-                  x="0.5%" y={`${rulerY - 1.8}%`}
-                  width="5%" height="1.8%" rx="0.5"
-                  fill="hsl(var(--primary))" opacity="0.8"
-                />
-                <text
-                  x="3%" y={`${rulerY - 0.9}%`}
-                  fill="hsl(var(--primary-foreground))" fontSize="1.5" textAnchor="middle"
-                  dominantBaseline="middle" fontFamily="var(--font-sans)" fontWeight="700"
-                >
-                  {rulerY.toFixed(0)}%
-                </text>
-              </g>
-            )}
+              );
+            })}
           </svg>
         </div>
+
+        {/* Fixed Overlay for Grid and Ruler */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ zIndex: 10 }}
+        >
+          {/* Grid overlay */}
+          <defs>
+            <pattern id="fixed-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="hsl(var(--foreground))" strokeWidth="0.5" opacity="0.15" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#fixed-grid)" />
+
+          {/* Horizontal ruler */}
+          {showRuler && (
+            <g>
+              <line
+                x1="0" y1={`${rulerY}%`}
+                x2="100%" y2={`${rulerY}%`}
+                stroke="hsl(var(--primary))" strokeWidth="1.5" opacity="0.8"
+                strokeDasharray="6 4"
+              />
+              <rect
+                x="0" y={`calc(${rulerY}% - 8px)`}
+                width="100%" height="16px"
+                fill="transparent"
+                className="cursor-ns-resize"
+                style={{ pointerEvents: "auto", touchAction: "none" }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDraggingRuler(true);
+                }}
+              />
+              <rect
+                x="8" y={`calc(${rulerY}% - 12px)`}
+                width="40" height="24" rx="4"
+                fill="hsl(var(--primary))" opacity="0.9"
+              />
+              <text
+                x="28" y={`${rulerY}%`}
+                fill="hsl(var(--primary-foreground))" fontSize="12" textAnchor="middle"
+                dominantBaseline="middle" fontFamily="var(--font-sans)" fontWeight="700"
+              >
+                {rulerY.toFixed(0)}%
+              </text>
+            </g>
+          )}
+        </svg>
       </div>
 
       {/* Live measurements preview */}
@@ -466,7 +581,7 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
           Recalcular Análise
         </Button>
       </div>
-    </div>
+    </div >
   );
 };
 

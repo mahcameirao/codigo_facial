@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Download, Scissors, Glasses, Palette, Crown, Target, Percent, Ruler, Eye, Activity, Info, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { ArrowLeft, Download, Palette, Crown, Target, Percent, Ruler, Activity, Info, CheckCircle2, AlertTriangle, XCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,18 +8,19 @@ import FaceMeasurementsOverlay from "@/components/results/FaceMeasurementsOverla
 import FacePointsEditor from "@/components/results/FacePointsEditor";
 import { useMemo, useState, useCallback } from "react";
 import logoMarcela from "@/assets/logo-marcela.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Medidas simuladas (em cm) — serão substituídas por dados reais da IA
 const MOCK_RAW: RawMeasurements = {
-  a: 3.2,  // Distância dos olhos (largura do olho)
-  b: 3.4,  // Distância entre os olhos (interocular)
-  c: 3.5,  // Largura do nariz
-  j: 18.2, // Altura do rosto real
-  k: 13.4, // Largura do rosto real
-  l: 5.1,  // Largura da boca real
-  m: 6.0,  // Terço superior
-  n: 5.6,  // Terço médio
-  o: 6.6,  // Terço inferior
+  a: 3.2,
+  b: 3.4,
+  c: 3.5,
+  j: 18.2,
+  k: 13.4,
+  l: 5.1,
+  m: 6.0,
+  n: 5.6,
+  o: 6.6,
 };
 
 // ---- Sub-components ----
@@ -39,10 +40,9 @@ const MetricCard = ({
   label: string; value: string | number; icon: React.ElementType; color?: string; tooltip?: string;
 }) => {
   const card = (
-    <div className="rounded-xl border border-border bg-card/50 p-5 flex items-start gap-4 hover:border-primary/30 transition-colors">
-      <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
-        color === "accent" ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"
-      }`}>
+    <div className="rounded-xl border border-border bg-card/50 p-5 flex items-start gap-4 hover:border-primary/30 transition-colors h-full">
+      <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${color === "accent" ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"
+        }`}>
         <Icon className="h-5 w-5" />
       </div>
       <div>
@@ -136,6 +136,30 @@ const SuggestionCard = ({ title, icon: Icon, items }: { title: string; icon: Rea
   </div>
 );
 
+const BlurWrapper = ({ children, isLocked }: { children: React.ReactNode; isLocked: boolean }) => {
+  if (!isLocked) return <>{children}</>;
+
+  return (
+    <div className="relative group">
+      <div className="blur-[6px] pointer-events-none select-none filter transition-all duration-300">
+        {children}
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/10 backdrop-blur-[2px] rounded-xl border border-primary/20 p-6 z-10">
+        <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+          <Lock className="h-6 w-6 text-primary" />
+        </div>
+        <h3 className="text-xl font-bold font-display mb-2">Conteúdo Exclusivo Pro</h3>
+        <p className="text-sm text-center text-muted-foreground max-w-[250px] mb-4">
+          Assine o plano Pro por apenas R$ 37,90 para liberar esta análise completa.
+        </p>
+        <Button variant="hero" size="sm" onClick={() => (document.getElementById("pricing-cta")?.scrollIntoView({ behavior: "smooth" }))}>
+          Liberar Agora
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 // ---- Gerar sugestões de estilo baseadas nos resultados ----
 function generateStyleSuggestions(result: VisagismResult) {
   const { faceShape, comparisons } = result;
@@ -144,7 +168,6 @@ function generateStyleSuggestions(result: VisagismResult) {
   const glassesSuggestions: string[] = [];
   const beardSuggestions: string[] = [];
 
-  // Sugestões por formato
   const shapeStyles: Record<string, { hair: string[]; glasses: string[]; beard: string[] }> = {
     Oval: {
       hair: ["Cortes médios com camadas suaves", "Franjas laterais para movimento", "Volume no topo para equilibrar"],
@@ -188,7 +211,6 @@ function generateStyleSuggestions(result: VisagismResult) {
   glassesSuggestions.push(...style.glasses);
   beardSuggestions.push(...style.beard);
 
-  // Ajuste pelo largura do rosto
   const faceWidthComp = comparisons.find(c => c.key === "face_width");
   if (faceWidthComp?.status === "greater") {
     hairSuggestions.push("Evitar volume nas laterais que alargue mais o rosto");
@@ -209,24 +231,22 @@ function generateStyleSuggestions(result: VisagismResult) {
 const ResultsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const imageUrl = (location.state as any)?.imageUrl as string | undefined;
+
+  const isFree = user?.plan !== "pro";
 
   const [rawMeasurements, setRawMeasurements] = useState<RawMeasurements>(MOCK_RAW);
 
   const result = useMemo(() => analyzeVisagism(rawMeasurements), [rawMeasurements]);
   const suggestions = useMemo(() => generateStyleSuggestions(result), [result]);
 
-  const { rawMeasurements: raw, idealValues: ideal, referenceLine, referenceLabel, comparisons, thirdsAnalysis } = result;
+  const { rawMeasurements: raw, idealValues: ideal, referenceLabel, comparisons, thirdsAnalysis } = result;
 
   const handleRecalculate = useCallback((newMeasurements: RawMeasurements) => {
     setRawMeasurements(newMeasurements);
-    // Scroll to top of results
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
-
-  const refFaceWidth = referenceLine === "a" ? ideal.x : referenceLine === "b" ? ideal.y : ideal.z;
-  const refFaceHeight = referenceLine === "a" ? ideal.d : referenceLine === "b" ? ideal.e : ideal.f;
-  const refMouthWidth = referenceLine === "a" ? ideal.g : referenceLine === "b" ? ideal.h : ideal.i;
 
   return (
     <TooltipProvider>
@@ -242,7 +262,6 @@ const ResultsPage = () => {
           </button>
 
           <div className="max-w-4xl mx-auto">
-            {/* Header */}
             <div className="text-center mb-12">
               <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">
                 Sua Análise <span className="text-gradient-gold">Visagista</span>
@@ -250,7 +269,6 @@ const ResultsPage = () => {
               <p className="text-muted-foreground">Cálculos baseados em proporção áurea (1.618) e visagismo clássico</p>
             </div>
 
-            {/* Draggable points editor (if photo available) or static overlay */}
             {imageUrl ? (
               <FacePointsEditor
                 imageUrl={imageUrl}
@@ -260,30 +278,15 @@ const ResultsPage = () => {
               <FaceMeasurementsOverlay measurements={raw} />
             )}
 
-            {/* Main metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              <MetricCard icon={Crown} label="Formato do Rosto" value={result.faceShape} tooltip="Classificação baseada nas relações entre largura, altura e terços faciais" />
-              <MetricCard icon={Target} label="Proporção Áurea" value={result.goldenRatioScore.toFixed(2)} color="accent" tooltip="Ideal: 1.618 (número de ouro de Da Vinci)" />
-              <MetricCard icon={Percent} label="Simetria Facial" value={`${result.symmetryScore}%`} tooltip="Baseada na simetria bilateral e equilíbrio dos terços" />
-              <MetricCard icon={Activity} label="Medida Referência" value={referenceLabel} color="accent" tooltip="Medida que mais se aproxima dos valores ideais calculados" />
+              <MetricCard icon={Crown} label="Formato do Rosto" value={result.faceShape} />
+              <MetricCard icon={Target} label="Proporção Áurea" value={result.goldenRatioScore.toFixed(2)} color="accent" />
+              <MetricCard icon={Percent} label="Simetria Facial" value={`${result.symmetryScore}%`} />
+              <MetricCard icon={Activity} label="Medida Referência" value={referenceLabel} color="accent" />
             </div>
 
-            {/* Reference measurement explanation */}
-            <div className="rounded-xl border border-primary/20 bg-card/50 p-5 mb-10 flex items-start gap-3">
-              <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold mb-1">Medida Referência: {referenceLabel}</p>
-                <p className="text-xs text-muted-foreground">
-                  A medida referência é selecionada automaticamente com base na linha que possui mais valores próximos ou iguais aos ideais calculados.
-                  Todas as comparações abaixo usam esta referência ({referenceLine} = {raw[referenceLine].toFixed(1)} cm).
-                </p>
-              </div>
-            </div>
-
-            {/* Raw Measurements + Ideal Values side by side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-              {/* Raw measurements */}
-              <div className="rounded-xl border border-border bg-card/50 p-6">
+              <div className="rounded-xl border border-border bg-card/50 p-6 h-full">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Ruler className="h-5 w-5 text-primary" />
@@ -301,89 +304,87 @@ const ResultsPage = () => {
                 <MeasurementRow label="Terço inferior" value={`${raw.o.toFixed(1)} cm`} />
               </div>
 
-              {/* Ideal calculated values */}
-              <div className="rounded-xl border border-border bg-card/50 p-6">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <Target className="h-5 w-5 text-accent" />
+              <BlurWrapper isLocked={isFree}>
+                <div className="rounded-xl border border-border bg-card/50 p-6 h-full">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <Target className="h-5 w-5 text-accent" />
+                    </div>
+                    <h2 className="font-display text-lg font-semibold">Medidas Ideais</h2>
                   </div>
-                  <h2 className="font-display text-lg font-semibold">Medidas Ideais</h2>
+                  <IdealRow label="Largura rosto (X)" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.x.toFixed(1)}`} />
+                  <IdealRow label="Altura rosto (D)" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.d.toFixed(1)}`} />
+                  <IdealRow label="Boca (G)" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.g.toFixed(1)}`} />
                 </div>
-                <IdealRow label="Largura rosto" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.x.toFixed(1)}`} />
-                <IdealRow label="Altura rosto" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.d.toFixed(1)}`} />
-                <IdealRow label="Boca" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.g.toFixed(1)}`} />
-                <IdealRow label="Largura rosto" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.y.toFixed(1)}`} />
-                <IdealRow label="Altura rosto" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.e.toFixed(1)}`} />
-                <IdealRow label="Boca" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.h.toFixed(1)}`} />
-                <IdealRow label="Largura rosto" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.z.toFixed(1)}`} />
-                <IdealRow label="Altura rosto" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.f.toFixed(1)}`} />
-                <IdealRow label="Boca" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.i.toFixed(1)}`} />
-              </div>
+              </BlurWrapper>
             </div>
 
-            {/* Comparisons - the core visagism analysis */}
             <h2 className="font-display text-2xl font-bold mb-6">
               Análise <span className="text-gradient-gold">Comparativa</span>
             </h2>
-            <div className="space-y-4 mb-10">
-              {comparisons.map((comp) => (
-                <ComparisonCard key={comp.key} comparison={comp} />
-              ))}
-            </div>
+            <BlurWrapper isLocked={isFree}>
+              <div className="space-y-4 mb-10">
+                {comparisons.map((comp) => (
+                  <ComparisonCard key={comp.key} comparison={comp} />
+                ))}
+              </div>
+            </BlurWrapper>
 
-            {/* Thirds balance */}
-            <div className="rounded-xl border border-border bg-card/50 p-6 mb-10">
-              <h2 className="font-display text-xl font-semibold mb-5">Regra dos Terços</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                <div className={`text-center p-3 rounded-lg ${thirdsAnalysis.largest === "m" ? "bg-yellow-400/10 border border-yellow-400/20" : "bg-secondary/30"}`}>
-                  <p className="text-xs text-muted-foreground mb-1">Linha do cabelo → Sobrancelhas</p>
-                  <p className="text-lg font-bold font-display">{thirdsAnalysis.percentages.upper}%</p>
-                  <p className="text-[10px] text-muted-foreground">{raw.m.toFixed(1)} cm</p>
+            <BlurWrapper isLocked={isFree}>
+              <div className="rounded-xl border border-border bg-card/50 p-6 mb-10">
+                <h2 className="font-display text-xl font-semibold mb-5">Regra dos Terços</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                  <div className={`text-center p-3 rounded-lg ${thirdsAnalysis.largest === "m" ? "bg-yellow-400/10 border border-yellow-400/20" : "bg-secondary/30"}`}>
+                    <p className="text-xs text-muted-foreground mb-1">Linha do cabelo → Sobrancelhas</p>
+                    <p className="text-lg font-bold font-display">{thirdsAnalysis.percentages.upper}%</p>
+                  </div>
+                  <div className={`text-center p-3 rounded-lg ${thirdsAnalysis.largest === "n" ? "bg-yellow-400/10 border border-yellow-400/20" : "bg-secondary/30"}`}>
+                    <p className="text-xs text-muted-foreground mb-1">Sobrancelhas → Base do nariz</p>
+                    <p className="text-lg font-bold font-display">{thirdsAnalysis.percentages.middle}%</p>
+                  </div>
+                  <div className={`text-center p-3 rounded-lg ${thirdsAnalysis.largest === "o" ? "bg-yellow-400/10 border border-yellow-400/20" : "bg-secondary/30"}`}>
+                    <p className="text-xs text-muted-foreground mb-1">Base do nariz → Queixo</p>
+                    <p className="text-lg font-bold font-display">{thirdsAnalysis.percentages.lower}%</p>
+                  </div>
                 </div>
-                <div className={`text-center p-3 rounded-lg ${thirdsAnalysis.largest === "n" ? "bg-yellow-400/10 border border-yellow-400/20" : "bg-secondary/30"}`}>
-                  <p className="text-xs text-muted-foreground mb-1">Sobrancelhas → Base do nariz</p>
-                  <p className="text-lg font-bold font-display">{thirdsAnalysis.percentages.middle}%</p>
-                  <p className="text-[10px] text-muted-foreground">{raw.n.toFixed(1)} cm</p>
-                </div>
-                <div className={`text-center p-3 rounded-lg ${thirdsAnalysis.largest === "o" ? "bg-yellow-400/10 border border-yellow-400/20" : "bg-secondary/30"}`}>
-                  <p className="text-xs text-muted-foreground mb-1">Base do nariz → Queixo</p>
-                  <p className="text-lg font-bold font-display">{thirdsAnalysis.percentages.lower}%</p>
-                  <p className="text-[10px] text-muted-foreground">{raw.o.toFixed(1)} cm</p>
+                <div className="space-y-4">
+                  <ThirdsBar label="Superior" value={thirdsAnalysis.percentages.upper} ideal={33.3} />
+                  <ThirdsBar label="Médio" value={thirdsAnalysis.percentages.middle} ideal={33.3} />
+                  <ThirdsBar label="Inferior" value={thirdsAnalysis.percentages.lower} ideal={33.3} />
                 </div>
               </div>
-              <div className="space-y-4">
-                <ThirdsBar label="Superior" value={thirdsAnalysis.percentages.upper} ideal={33.3} />
-                <ThirdsBar label="Médio" value={thirdsAnalysis.percentages.middle} ideal={33.3} />
-                <ThirdsBar label="Inferior" value={thirdsAnalysis.percentages.lower} ideal={33.3} />
-              </div>
-              <p className="text-xs text-muted-foreground mt-4">
-                Ideal: ~33.3% cada. O terço destacado é o {thirdsAnalysis.largest === "m" ? "superior" : thirdsAnalysis.largest === "n" ? "médio" : "inferior"} (maior).
-              </p>
-            </div>
+            </BlurWrapper>
 
-            {/* Style Suggestions */}
             <h2 className="font-display text-2xl font-bold mb-6">
               Sugestões <span className="text-gradient-gold">Personalizadas</span>
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-              <SuggestionCard title="Cortes de Cabelo" icon={Scissors} items={suggestions.hair} />
-              <SuggestionCard title="Armações de Óculos" icon={Glasses} items={suggestions.glasses} />
-              <SuggestionCard title="Barba" icon={Crown} items={suggestions.beard} />
-              <SuggestionCard title="Maquiagem & Estética" icon={Palette} items={suggestions.aesthetic} />
-            </div>
+            <BlurWrapper isLocked={isFree}>
+              <div className="grid grid-cols-1 gap-4 mb-10">
+                <SuggestionCard title="Maquiagem & Estética" icon={Palette} items={suggestions.aesthetic} />
+              </div>
+            </BlurWrapper>
 
-            {/* CTA */}
-            <div className="rounded-2xl border border-primary/30 bg-card p-8 text-center glow-gold">
+            <div id="pricing-cta" className="rounded-2xl border border-primary/30 bg-card p-8 text-center glow-gold">
               <img src={logoMarcela} alt="Marcela Cameirão" className="h-16 mx-auto mb-4 opacity-80" />
-              <h2 className="font-display text-2xl font-bold mb-2">Quer o relatório completo em PDF?</h2>
+              <h2 className="font-display text-2xl font-bold mb-2">
+                {isFree ? "Liberar Acesso Pro" : "Acesso Completo Ativado"}
+              </h2>
               <p className="text-muted-foreground mb-6">
-                Assine o plano Premium e tenha acesso ao relatório detalhado com todas as métricas e marcações faciais.
+                {isFree
+                  ? "Assine o plano Pro para remover o desfoque e ter acesso às medidas ideais, sugestões de visagismo e relatório completo."
+                  : "Você já possui acesso completo às ferramentas de visagismo com proporção áurea."}
               </p>
               <div className="flex justify-center gap-4">
-                <Button variant="hero" size="lg" className="px-8">
-                  <Download className="mr-2 h-5 w-5" />
-                  Baixar PDF Premium
-                </Button>
+                {isFree ? (
+                  <Button variant="hero" size="lg" className="px-8" onClick={() => (document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }))}>
+                    Assinar Plano Pro - R$ 37,90
+                  </Button>
+                ) : (
+                  <Button variant="hero" size="lg" className="px-8" onClick={() => window.print()}>
+                    <Download className="mr-2 h-5 w-5" />
+                    Salvar Relatório
+                  </Button>
+                )}
               </div>
             </div>
           </div>

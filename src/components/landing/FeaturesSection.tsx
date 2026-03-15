@@ -17,19 +17,9 @@ const features = [
     description: "Análise detalhada com métricas, gráficos e recomendações personalizadas em PDF.",
   },
   {
-    icon: Scissors,
-    title: "Cortes Ideais",
-    description: "Sugestões de cortes de cabelo que harmonizam com o formato do seu rosto.",
-  },
-  {
-    icon: Glasses,
-    title: "Armações Perfeitas",
-    description: "Descubra quais modelos de óculos valorizam suas proporções faciais.",
-  },
-  {
     icon: Palette,
-    title: "Visagismo Completo",
-    description: "Barba, maquiagem e dicas estéticas baseadas em psicologia da imagem.",
+    title: "Visagismo e Maquiagem",
+    description: "Maquiagem e dicas estéticas baseadas no formato e proporção do seu rosto.",
   },
 ];
 
@@ -46,7 +36,7 @@ const FeaturesSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {features.map((feature, i) => (
             <div
               key={i}

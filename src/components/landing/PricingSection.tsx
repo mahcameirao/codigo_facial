@@ -1,44 +1,83 @@
-import { Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useState } from "react";
+import { Loader2, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const plans = [
   {
     name: "Gratuito",
     price: "R$ 0",
-    description: "Experimente a análise básica",
+    description: "Cálculos básicos e medidas essenciais",
     features: [
-      "1 análise facial",
-      "Formato do rosto",
-      "Proporção áurea",
-      "Simetria básica",
+      "upload e leitura ilimitada",
+      "Medidas Reais (cm)",
+      "Análise Formato do Rosto",
+      "Cálculo de Proporção Áurea",
+      "Score de Simetria Facial",
     ],
-    cta: "Começar grátis",
+    cta: "Usar Grátis",
     highlight: false,
   },
   {
-    name: "Premium",
-    price: "R$ 29",
+    name: "Pro",
+    price: "R$ 37,90",
     period: "/mês",
-    description: "Análise completa com sugestões",
+    description: "Análise avançada completa e sugestões",
     features: [
-      "Análises ilimitadas",
-      "Relatório PDF detalhado",
-      "Sugestões de cabelo e óculos",
-      "Sugestões de barba e estética",
-      "Histórico de análises",
-      "Comparativo antes/depois",
+      "Tudo do plano gratuito",
+      "Medidas Ideais Calculadas",
+      "Análise Comparativa Detalhada",
+      "Regra dos Terços Explicada",
+      "Sugestões de Maquiagem & Estilo",
+      "Sem desfoque nos resultados",
+      "Suporte exclusivo",
     ],
-    cta: "Assinar Premium",
+    cta: "Assinar Pro",
     highlight: true,
   },
 ];
 
 const PricingSection = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleSubscribe = async (planName: string) => {
+    if (planName === "Gratuito") {
+      navigate("/upload");
+      return;
+    }
+
+    if (!user) {
+      toast.info("Faça login para assinar o plano Pro");
+      navigate("/register");
+      return;
+    }
+
+    if (user?.plan === "pro") {
+      toast.success("Você já possui o plano Pro!");
+      return;
+    }
+
+    try {
+      setLoading(planName);
+      const response = await api.post("/payment/create-checkout-session");
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error: any) {
+      console.error("Erro ao iniciar pagamento:", error);
+      toast.error(error.response?.data?.error || "Erro ao processar pagamento. Tente novamente.");
+    } finally {
+      setLoading(null);
+    }
+  };
 
   return (
-    <section className="py-24">
+    <section id="pricing" className="py-24">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
@@ -51,11 +90,10 @@ const PricingSection = () => {
           {plans.map((plan, i) => (
             <div
               key={i}
-              className={`relative rounded-2xl border p-8 transition-all duration-300 ${
-                plan.highlight
-                  ? "border-primary/50 bg-card glow-gold"
-                  : "border-border bg-card/50"
-              }`}
+              className={`relative rounded-2xl border p-8 transition-all duration-300 ${plan.highlight
+                ? "border-primary/50 bg-card glow-gold"
+                : "border-border bg-card/50"
+                }`}
             >
               {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold text-primary-foreground">
@@ -82,9 +120,17 @@ const PricingSection = () => {
               <Button
                 variant={plan.highlight ? "hero" : "heroOutline"}
                 className="w-full py-5"
-                onClick={() => navigate("/upload")}
+                disabled={loading !== null}
+                onClick={() => handleSubscribe(plan.name)}
               >
-                {plan.cta}
+                {loading === plan.name ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  plan.cta
+                )}
               </Button>
             </div>
           ))}

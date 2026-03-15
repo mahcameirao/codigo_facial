@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import heroImage from "@/assets/hero-face.png";
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -31,8 +33,7 @@ const HeroSection = () => {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed">
-            Análise visagista profissional baseada em inteligência artificial, proporção áurea
-            e os princípios de Philip Hallawell e Leonardo da Vinci.
+            Análise visagista profissional baseada em inteligência artificial para que você possa fazer a maquiagem ideal para seu rosto.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
@@ -40,7 +41,7 @@ const HeroSection = () => {
               variant="hero"
               size="lg"
               className="text-base px-8 py-6"
-              onClick={() => navigate("/upload")}
+              onClick={() => navigate(token ? "/upload" : "/register")}
             >
               Fazer minha análise
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -50,7 +51,7 @@ const HeroSection = () => {
               size="lg"
               className="text-base px-8 py-6"
               onClick={() => {
-                document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
               Como funciona
