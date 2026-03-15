@@ -42,7 +42,7 @@ const plans = [
 
 const PricingSection = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { session, profile } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (planName: string) => {

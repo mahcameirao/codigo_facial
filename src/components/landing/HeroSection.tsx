@@ -6,7 +6,7 @@ import heroImage from "@/assets/hero-face.png";
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { session } = useAuth();
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
