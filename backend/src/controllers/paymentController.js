@@ -20,7 +20,7 @@ class PaymentController {
             let session;
             try {
                 session = await stripe.checkout.sessions.create({
-                    payment_method_types: ['card', 'pix', 'boleto'],
+                    payment_method_types: ['card'],
                     line_items: [
                         {
                             price_data: {
