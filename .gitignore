@@ -20,3 +20,9 @@ node_modules
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets and local scripts
+.env
+.env.*
+test-stripe-key.js
+backend/test-stripe-key.js

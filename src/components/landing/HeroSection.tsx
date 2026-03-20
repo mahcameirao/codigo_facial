@@ -58,20 +58,7 @@ const HeroSection = () => {
             </Button>
           </div>
 
-          <div className="mt-12 flex items-center gap-8 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-accent animate-pulse-slow" />
-              <span>468 pontos faciais</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse-slow" />
-              <span>Proporção áurea</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-accent animate-pulse-slow" />
-              <span>Relatório PDF</span>
-            </div>
-          </div>
+
         </div>
       </div>
     </section>
