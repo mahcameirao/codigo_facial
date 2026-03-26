@@ -9,6 +9,8 @@ import FacePointsEditor from "@/components/results/FacePointsEditor";
 import { useMemo, useState, useCallback } from "react";
 import logoMarcela from "@/assets/logo-marcela.png";
 import { useAuth } from "@/contexts/AuthContext";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import PdfReport from "@/components/results/PdfReport";
 
 // Medidas simuladas (em cm) — serão substituídas por dados reais da IA
 const MOCK_RAW: RawMeasurements = {
@@ -231,10 +233,10 @@ function generateStyleSuggestions(result: VisagismResult) {
 const ResultsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const imageUrl = (location.state as any)?.imageUrl as string | undefined;
 
-  const isFree = true; // TODO: implement plan check via profiles table
+  const isFree = false; // TODO: implement plan check via profiles table
 
   const [rawMeasurements, setRawMeasurements] = useState<RawMeasurements>(MOCK_RAW);
 
@@ -380,10 +382,25 @@ const ResultsPage = () => {
                     Assinar Plano Pro - R$ 37,90
                   </Button>
                 ) : (
-                  <Button variant="hero" size="lg" className="px-8" onClick={() => window.print()}>
-                    <Download className="mr-2 h-5 w-5" />
-                    Salvar Relatório
-                  </Button>
+                  <PDFDownloadLink
+                    document={
+                      <PdfReport
+                        result={result}
+                        suggestions={suggestions}
+                        imageUrl={imageUrl}
+                        userName={profile?.name || user?.email || "Cliente"}
+                      />
+                    }
+                    fileName="Dossie-Visagismo.pdf"
+                    className="inline-block"
+                  >
+                    {({ loading }) => (
+                      <Button variant="hero" size="lg" className="px-8 w-full" disabled={loading}>
+                        <Download className="mr-2 h-5 w-5" />
+                        {loading ? "Gerando Relatório PDF..." : "Baixar Dossiê PDF"}
+                      </Button>
+                    )}
+                  </PDFDownloadLink>
                 )}
               </div>
             </div>
