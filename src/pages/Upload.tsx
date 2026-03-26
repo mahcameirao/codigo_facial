@@ -3,12 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Upload, Image, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
 const UploadPage = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +43,29 @@ const UploadPage = () => {
     [handleFile]
   );
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!file) return;
+
+    if (user && profile) {
+      if ((profile.analysis_count || 0) >= 1) {
+        toast.error("Limite Atingido", {
+          description: "Você já utilizou sua análise no plano gratuito. Assine o Pro para análises ilimitadas."
+        });
+        document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ analysis_count: (profile.analysis_count || 0) + 1 })
+        .eq('id', user.id);
+
+      if (updateError) {
+        toast.error("Erro", { description: "Erro ao registrar uso da análise. Tente novamente." });
+        return;
+      }
+    }
+
     setLoading(true);
     // Simulate processing
     setTimeout(() => {

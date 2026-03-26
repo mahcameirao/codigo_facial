@@ -28,9 +28,10 @@ const App = () => (
             <Route path="/signup" element={<SignUp />} />
             <Route path="/register" element={<Register />} />
 
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/results" element={<Results />} />
             <Route element={<ProtectedRoute />}>
-              <Route path="/upload" element={<Upload />} />
-              <Route path="/results" element={<Results />} />
+              {/* Insert any protected routes here in the future */}
             </Route>
 
             <Route path="*" element={<NotFound />} />

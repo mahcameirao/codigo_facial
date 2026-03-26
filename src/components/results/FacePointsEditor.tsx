@@ -3,6 +3,9 @@ import { RefreshCw, Move, Info, ZoomIn, ZoomOut, Maximize, Ruler, RotateCw, Rota
 import * as faceapi from '@vladmandic/face-api';
 import { Button } from "@/components/ui/button";
 import type { RawMeasurements } from "@/lib/visagism-calculator";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 // Named landmark points the user can drag
 export interface LandmarkPoints {
@@ -162,6 +165,8 @@ interface FacePointsEditorProps {
 }
 
 const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [points, setPoints] = useState<LandmarkPoints>(DEFAULT_LANDMARKS);
   const [activePoint, setActivePoint] = useState<keyof LandmarkPoints | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -231,9 +236,16 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   }, [imageUrl]);
 
   const handleDragStart = useCallback((id: keyof LandmarkPoints) => {
+    if (!user) {
+      toast.error("Cadastro Necessário", {
+        description: "Faça seu cadastro para ajustar os pontos médicos."
+      });
+      navigate("/register");
+      return;
+    }
     setActivePoint(id);
     setIsDragging(true);
-  }, []);
+  }, [user, navigate]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!innerRef.current) return;
@@ -349,6 +361,13 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
   const toggleRuler = () => setShowRuler(prev => !prev);
 
   const handleRecalculate = () => {
+    if (!user) {
+      toast.error("Cadastro Necessário", {
+        description: "Faça o cadastro para recalcular a análise."
+      });
+      navigate("/register");
+      return;
+    }
     onRecalculate(measurements);
   };
 

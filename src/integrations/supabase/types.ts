@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          analysis_count: number
           created_at: string
           email: string
           id: string
@@ -24,6 +25,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          analysis_count?: number
           created_at?: string
           email: string
           id: string
@@ -32,6 +34,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          analysis_count?: number
           created_at?: string
           email?: string
           id?: string

@@ -41,7 +41,7 @@ const HeroSection = () => {
               variant="hero"
               size="lg"
               className="text-base px-8 py-6"
-              onClick={() => navigate(session ? "/upload" : "/register")}
+              onClick={() => navigate("/upload")}
             >
               Fazer minha análise
               <ArrowRight className="ml-2 h-5 w-5" />

@@ -26,7 +26,12 @@ const Login = () => {
     const { error } = await signIn(email.trim(), password);
     setIsLoading(false);
     if (error) {
-      toast({ title: "Erro ao entrar", description: error, variant: "destructive" });
+      const isEmailNotConfirmed = error.toLowerCase().includes("email not confirmed");
+      toast({ 
+        title: isEmailNotConfirmed ? "Confirmação Pendente" : "Erro ao entrar", 
+        description: isEmailNotConfirmed ? "Você precisa clicar no link de confirmação enviado para o seu e-mail antes de fazer login." : error, 
+        variant: "destructive" 
+      });
     } else {
       navigate("/upload");
     }
