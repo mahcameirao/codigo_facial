@@ -236,7 +236,7 @@ const ResultsPage = () => {
   const { user, profile } = useAuth();
   const imageUrl = (location.state as any)?.imageUrl as string | undefined;
 
-  const isFree = false; // TODO: implement plan check via profiles table
+  const isFree = true; // TODO: implement plan check via profiles table
 
   const [rawMeasurements, setRawMeasurements] = useState<RawMeasurements>(MOCK_RAW);
 
@@ -376,31 +376,31 @@ const ResultsPage = () => {
                   ? "Assine o plano Pro para remover o desfoque e ter acesso às medidas ideais, sugestões de visagismo e relatório completo."
                   : "Você já possui acesso completo às ferramentas de visagismo com proporção áurea."}
               </p>
-              <div className="flex justify-center gap-4">
-                {isFree ? (
-                  <Button variant="hero" size="lg" className="px-8" onClick={() => (document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }))}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <PDFDownloadLink
+                  document={
+                    <PdfReport
+                      result={result}
+                      suggestions={suggestions}
+                      imageUrl={imageUrl}
+                      userName={profile?.name || user?.email || "Cliente"}
+                    />
+                  }
+                  fileName="Dossie-Visagismo.pdf"
+                  className="w-full sm:w-auto"
+                >
+                  {({ loading }) => (
+                    <Button variant={isFree ? "outline" : "hero"} size="lg" className="px-8 w-full" disabled={loading}>
+                      <Download className="mr-2 h-5 w-5" />
+                      {loading ? "Gerando Relatório PDF..." : "Baixar Dossiê PDF"}
+                    </Button>
+                  )}
+                </PDFDownloadLink>
+
+                {isFree && (
+                  <Button variant="hero" size="lg" className="px-8 w-full" onClick={() => (document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }))}>
                     Assinar Plano Pro - R$ 37,90
                   </Button>
-                ) : (
-                  <PDFDownloadLink
-                    document={
-                      <PdfReport
-                        result={result}
-                        suggestions={suggestions}
-                        imageUrl={imageUrl}
-                        userName={profile?.name || user?.email || "Cliente"}
-                      />
-                    }
-                    fileName="Dossie-Visagismo.pdf"
-                    className="inline-block"
-                  >
-                    {({ loading }) => (
-                      <Button variant="hero" size="lg" className="px-8 w-full" disabled={loading}>
-                        <Download className="mr-2 h-5 w-5" />
-                        {loading ? "Gerando Relatório PDF..." : "Baixar Dossiê PDF"}
-                      </Button>
-                    )}
-                  </PDFDownloadLink>
                 )}
               </div>
             </div>
