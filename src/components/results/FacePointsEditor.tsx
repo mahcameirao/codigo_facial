@@ -107,7 +107,7 @@ const DraggablePoint = ({ id, point, meta, isActive, onDragStart, zoom = 1, isCl
     style={{ touchAction: "none" }}
   >
     {/* Hit area */}
-    <circle cx={`${point.x}%`} cy={`${point.y}%`} r={12 / zoom} fill="transparent" />
+    <circle cx={`${point.x}%`} cy={`${point.y}%`} r={4.5 / zoom} fill="transparent" />
     {/* Outer ring */}
     <circle
       cx={`${point.x}%`} cy={`${point.y}%`} r={(isClamped ? 2.5 : 1.5) / zoom}
@@ -121,11 +121,11 @@ const DraggablePoint = ({ id, point, meta, isActive, onDragStart, zoom = 1, isCl
       cx={`${point.x}%`} cy={`${point.y}%`} r={(isActive || isClamped) ? 0.8 / zoom : 0.5 / zoom}
       fill={meta.color} opacity="1"
     />
-    {/* Crosshair when active */}
+    {/* Full-span Crosshair when active */}
     {isActive && (
       <>
-        <line x1={`${point.x - 1.8 / zoom}%`} y1={`${point.y}%`} x2={`${point.x + 1.8 / zoom}%`} y2={`${point.y}%`} stroke={meta.color} strokeWidth={0.3 / zoom} opacity="0.6" />
-        <line x1={`${point.x}%`} y1={`${point.y - 1.8 / zoom}%`} x2={`${point.x}%`} y2={`${point.y + 1.8 / zoom}%`} stroke={meta.color} strokeWidth={0.3 / zoom} opacity="0.6" />
+        <line x1="0%" y1={`${point.y}%`} x2="100%" y2={`${point.y}%`} stroke={meta.color} strokeWidth={0.5 / zoom} opacity="0.6" strokeDasharray={`${3 / zoom} ${3 / zoom}`} />
+        <line x1={`${point.x}%`} y1="0%" x2={`${point.x}%`} y2="100%" stroke={meta.color} strokeWidth={0.5 / zoom} opacity="0.6" strokeDasharray={`${3 / zoom} ${3 / zoom}`} />
       </>
     )}
     {/* Label */}
@@ -512,7 +512,7 @@ const FacePointsEditor = ({ imageUrl, onRecalculate }: FacePointsEditorProps) =>
                   id={id}
                   point={visualPoint}
                   meta={POINT_META[id]}
-                  isActive={activePoint === id}
+                  isActive={isDragging && activePoint === id}
                   onDragStart={handleDragStart}
                   zoom={zoom}
                   isClamped={isClamped}

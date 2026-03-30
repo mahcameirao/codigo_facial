@@ -312,9 +312,9 @@ const ResultsPage = () => {
                     </div>
                     <h2 className="font-display text-lg font-semibold">Medidas Ideais</h2>
                   </div>
-                  <IdealRow label="Largura rosto (X)" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.x.toFixed(1)}`} />
-                  <IdealRow label="Altura rosto (D)" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.d.toFixed(1)}`} />
-                  <IdealRow label="Boca (G)" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.g.toFixed(1)}`} />
+                  <IdealRow label="Largura rosto" real={`${raw.k.toFixed(1)}`} ideal={`${ideal.x.toFixed(1)}`} />
+                  <IdealRow label="Altura rosto" real={`${raw.j.toFixed(1)}`} ideal={`${ideal.d.toFixed(1)}`} />
+                  <IdealRow label="Boca" real={`${raw.l.toFixed(1)}`} ideal={`${ideal.g.toFixed(1)}`} />
                 </div>
               </BlurWrapper>
             </div>
