@@ -1,4 +1,4 @@
-const { verifyToken } = require('../utils/auth');
+const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -8,14 +8,23 @@ const authMiddleware = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = verifyToken(token);
+    
+    try {
+        const decoded = jwt.decode(token);
 
-    if (!decoded) {
-        return res.status(401).json({ error: 'Token inválido ou expirado.' });
+        if (!decoded || !decoded.sub) {
+            return res.status(401).json({ error: 'Token inválido ou expirado no Supabase.' });
+        }
+
+        req.user = {
+            userId: decoded.sub,
+            email: decoded.email
+        };
+        next();
+    } catch (error) {
+        console.error("Erro decodificando JWT:", error);
+        return res.status(401).json({ error: 'Token inválido.' });
     }
-
-    req.user = decoded;
-    next();
 };
 
 module.exports = authMiddleware;

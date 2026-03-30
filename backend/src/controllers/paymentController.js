@@ -1,22 +1,22 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const prisma = require('../config/database');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+    process.env.SUPABASE_URL || 'https://dummy.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy_key'
+);
 
 class PaymentController {
     static async createCheckoutSession(req, res, next) {
         try {
-            const { userId } = req.user;
+            const { userId, email } = req.user;
             console.log(`💳 Iniciando Checkout para usuário: ${userId}`);
 
-            const user = await prisma.user.findUnique({
-                where: { id: userId }
-            });
-
-            if (!user) {
-                console.log(`❌ Usuário ${userId} não encontrado no banco`);
-                return res.status(404).json({ error: 'Usuário não encontrado' });
+            if (!email) {
+                return res.status(400).json({ error: 'Email não encontrado no token de acesso' });
             }
 
-            console.log(`📡 Criando sessão no Stripe para ${user.email}...`);
+            console.log(`📡 Criando sessão no Stripe para ${email}...`);
             let session;
             try {
                 session = await stripe.checkout.sessions.create({
@@ -38,7 +38,7 @@ class PaymentController {
                     success_url: `${process.env.FRONTEND_URL}/results?success=true`,
                     cancel_url: `${process.env.FRONTEND_URL}/pricing?canceled=true`,
                     client_reference_id: userId,
-                    customer_email: user.email,
+                    customer_email: email,
                     payment_intent_data: {
                         metadata: {
                             userId: userId
@@ -69,7 +69,7 @@ class PaymentController {
                     success_url: `${process.env.FRONTEND_URL}/results?success=true`,
                     cancel_url: `${process.env.FRONTEND_URL}/pricing?canceled=true`,
                     client_reference_id: userId,
-                    customer_email: user.email,
+                    customer_email: email,
                     payment_intent_data: {
                         metadata: {
                             userId: userId
@@ -106,11 +106,14 @@ class PaymentController {
             const userId = session.client_reference_id;
 
             try {
-                await prisma.user.update({
-                    where: { id: userId },
-                    data: { plan: 'pro' }
-                });
-                console.log(`✅ Usuário ${userId} atualizado para o plano PRO`);
+                const { error: supabaseError } = await supabase
+                    .from('profiles')
+                    .update({ plan: 'pro' })
+                    .eq('id', userId);
+
+                if (supabaseError) throw new Error(supabaseError.message);
+
+                console.log(`✅ Usuário ${userId} atualizado para o plano PRO no Supabase`);
             } catch (error) {
                 console.error(`❌ Erro ao atualizar usuário ${userId}:`, error.message);
             }

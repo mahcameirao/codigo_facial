@@ -57,7 +57,7 @@ const PricingSection = () => {
       return;
     }
 
-    if (false) { // TODO: implement plan check via profiles table
+    if (profile?.plan === 'pro') { // TODO: implement plan check via profiles table
       toast.success("Você já possui o plano Pro!");
       return;
     }
