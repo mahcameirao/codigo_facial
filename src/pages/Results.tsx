@@ -395,3 +395,5 @@ const ResultsPage = () => {
 };
 
 export default ResultsPage;
+
+// Trigger update sync
