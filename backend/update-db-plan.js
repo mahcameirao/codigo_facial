@@ -14,14 +14,14 @@ const run = async () => {
         await client.connect();
         console.log('--- Conectado ao Supabase ---');
 
-        console.log('Adicionando coluna "plan" à tabela de usuários...');
+        console.log('Adicionando coluna "plan" à tabela de profiles (Supabase)...');
         // Verifica se a coluna já existe antes de tentar adicionar para evitar erro
         await client.query(`
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                               WHERE table_name='users' AND column_name='plan') THEN
-                    ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free';
+                               WHERE table_name='profiles' AND column_name='plan') THEN
+                    ALTER TABLE profiles ADD COLUMN plan TEXT DEFAULT 'free';
                 END IF;
             END
             $$;
