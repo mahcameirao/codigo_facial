@@ -11,7 +11,6 @@ const Register = () => {
     const [name, setName] = useState("");
     const [cpf, setCpf] = useState("");
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const { signUp } = useAuth();
     const navigate = useNavigate();
@@ -33,7 +32,7 @@ const Register = () => {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await signUp(email, password, name, cpf);
+        const { error } = await signUp(email, name, cpf);
         setLoading(false);
 
         if (error) {
@@ -59,7 +58,7 @@ const Register = () => {
                         Criar <span className="text-gradient-gold">Conta</span>
                     </CardTitle>
                     <CardDescription>
-                        Experimente a tecnologia visagista gratuitamente
+                        Entraremos em contato com um código de acesso
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
@@ -83,14 +82,10 @@ const Register = () => {
                             <Label htmlFor="email">Email</Label>
                             <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-background/50 border-primary/20 focus:border-primary/50" />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Senha (mínimo 8 caracteres)</Label>
-                            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="bg-background/50 border-primary/20 focus:border-primary/50" />
-                        </div>
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4">
                         <Button type="submit" className="w-full" variant="hero" disabled={loading}>
-                            {loading ? "Criando conta..." : "Criar Conta Grátis"}
+                            {loading ? "Enviando código..." : "Registrar e Receber Código"}
                         </Button>
                         <div className="text-center text-sm text-muted-foreground">
                             Já tem uma conta?{" "}

@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   profile: { id: string; name: string; email: string; cpf?: string; is_active: boolean; analysis_count?: number; plan?: string } | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string, cpf: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, name: string, cpf: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -63,13 +63,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string, cpf: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, name: string, cpf: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password,
       options: {
         data: { name, cpf },
-        emailRedirectTo: window.location.origin,
+        shouldCreateUser: true,
       },
     });
     return { error: error?.message ?? null };
@@ -84,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: 'signup'
+      type: 'email' // Changed to 'email' to work with signInWithOtp
     });
     return { error: error?.message ?? null };
   };
