@@ -87,14 +87,14 @@ const Login = () => {
                   className="text-xs text-primary hover:underline"
                   onClick={() => setIsResetMode(true)}
                 >
-                  Esqueci minha senha
+                  esqueci minha senha
                 </button>
               </div>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Sua senha"
+                  placeholder="sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-secondary border-border text-foreground pr-10"
