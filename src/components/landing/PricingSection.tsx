@@ -46,18 +46,20 @@ const PricingSection = () => {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (planName: string) => {
+    if (!session) {
+      if (planName === "Pro") {
+        toast.info("Faça login para assinar o plano Pro");
+      }
+      navigate("/register");
+      return;
+    }
+
     if (planName === "Gratuito") {
       navigate("/upload");
       return;
     }
 
-    if (!session) {
-      toast.info("Faça login para assinar o plano Pro");
-      navigate("/register");
-      return;
-    }
-
-    if (profile?.plan === 'pro') { // TODO: implement plan check via profiles table
+    if (profile?.plan === 'pro') {
       toast.success("Você já possui o plano Pro!");
       return;
     }
