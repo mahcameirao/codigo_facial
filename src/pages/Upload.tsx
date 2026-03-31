@@ -130,10 +130,11 @@ const UploadPage = () => {
                       <CheckCircle2 className="h-4 w-4" />
                       <span>{file?.name}</span>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
                       <Button
                         variant="heroOutline"
-                        size="sm"
+                        size="lg"
+                        className="flex-1"
                         onClick={() => {
                           setPreview(null);
                           setFile(null);
@@ -141,7 +142,7 @@ const UploadPage = () => {
                       >
                         Trocar foto
                       </Button>
-                      <Button variant="hero" size="lg" className="px-10" onClick={handleAnalyze}>
+                      <Button variant="hero" size="lg" className="flex-1" onClick={handleAnalyze}>
                         Analisar rosto
                       </Button>
                     </div>
