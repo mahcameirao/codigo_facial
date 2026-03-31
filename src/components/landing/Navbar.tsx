@@ -28,8 +28,10 @@ const Navbar = () => {
 
         <div className="flex items-center gap-4">
           {profile ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:inline">Olá, {profile.name.split(' ')[0]}</span>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/profile")} className="hidden sm:inline-flex">
+                Perfil
+              </Button>
               <Button variant="outline" size="sm" onClick={signOut}>
                 Sair
               </Button>
