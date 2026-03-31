@@ -6,6 +6,12 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto px-6 flex h-16 items-center justify-between">
@@ -32,7 +38,7 @@ const Navbar = () => {
               <Button variant="hero" size="sm" onClick={() => navigate("/profile")} className="hidden sm:inline-flex">
                 Perfil
               </Button>
-              <Button variant="outline" size="sm" onClick={signOut}>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
                 sair
               </Button>
             </div>
