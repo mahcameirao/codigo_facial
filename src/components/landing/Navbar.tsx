@@ -4,13 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto px-6 flex h-16 items-center justify-between">
         <Link 
-          to={profile ? "/upload" : "/"} 
+          to={user ? "/upload" : "/"} 
           className="flex items-center gap-2"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
@@ -27,7 +27,7 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {profile ? (
+          {user ? (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => navigate("/profile")} className="hidden sm:inline-flex">
                 Perfil
