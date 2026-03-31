@@ -13,6 +13,7 @@ const Register = () => {
     const [cpf, setCpf] = useState("");
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isCpfRegistered, setIsCpfRegistered] = useState(false);
     const { signUp } = useAuth();
     const navigate = useNavigate();
 
@@ -26,6 +27,7 @@ const Register = () => {
         value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         
         setCpf(value);
+        setIsCpfRegistered(false);
     };
 
     const handleCpfBlur = async () => {
@@ -38,6 +40,7 @@ const Register = () => {
             .maybeSingle() as any);
 
         if (existingUser) {
+            setIsCpfRegistered(true);
             toast.warning("CPF já cadastrado", {
                 description: "Este CPF já possui uma conta ativa. Direcionando para o login...",
                 duration: 3000,
@@ -116,8 +119,8 @@ const Register = () => {
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4">
-                        <Button type="submit" className="w-full" variant="hero" disabled={loading}>
-                            {loading ? "Criando conta..." : "Criar Conta Grátis"}
+                        <Button type="submit" className="w-full" variant="hero" disabled={loading || isCpfRegistered}>
+                            {loading ? "Criando conta..." : isCpfRegistered ? "CPF já cadastrado" : "Criar Conta Grátis"}
                         </Button>
                         <div className="text-center text-sm text-muted-foreground">
                             Já tem uma conta?{" "}
