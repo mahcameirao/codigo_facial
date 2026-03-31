@@ -1,10 +1,15 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteBase /
 
-  # Se o visitante acessar a raiz vazia (meusite.com/), sirva o index.html da dist
-  RewriteRule ^$ dist/index.html [L]
-  
-  # Se o visitante acessar um caminho não vazio, jogue-o dentro da pasta dist invisivelmente
+  # 1. Redirecionar tudo para a pasta /dist de forma invisível
+  # Se o arquivo não estiver na pasta /dist e não for uma pasta real
   RewriteCond %{REQUEST_URI} !^/dist/
   RewriteRule ^(.*)$ dist/$1 [L]
+
+  # 2. Se acessar a raiz, carregar o index.html da dist
+  RewriteRule ^$ dist/index.html [L]
 </IfModule>
+
+# Impedir listagem de diretórios (evita erro 403 se o index sumir)
+Options -Indexes

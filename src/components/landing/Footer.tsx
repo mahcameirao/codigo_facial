@@ -10,7 +10,7 @@ const Footer = () => {
             <span className="font-display font-semibold text-lg">Código Facial</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2026 Código Facial. Não substitui diagnóstico médico. Conformidade LGPD.
+            2025 © Codigo Facial todos direitos reservados
           </p>
         </div>
       </div>

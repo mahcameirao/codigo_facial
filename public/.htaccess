@@ -1,9 +1,18 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-
-  # Lida com o React Router internamente
+  
+  # Redirecionar para o index.html se o arquivo/diretório não existir
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule ^(.*)$ index.html [L]
+  RewriteRule ^ index.html [L]
 </IfModule>
+
+# Desativar cache do index.html para garantir que o site atualize sempre
+<Files "index.html">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </IfModule>
+</Files>
