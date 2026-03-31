@@ -12,6 +12,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   verifyEmailOtp: (email: string, token: string) => Promise<{ error: string | null }>;
+  resendOtp: (email: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("id, name, email, cpf, is_active, analysis_count, plan")
       .eq("id", userId)
       .single();
-    setProfile(data);
+    setProfile(data as any);
   };
 
   useEffect(() => {
@@ -79,6 +80,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error?.message ?? null };
   };
 
+  const resendOtp = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false, // Just resend
+      },
+    });
+    return { error: error?.message ?? null };
+  };
+
   const verifyEmailOtp = async (email: string, token: string) => {
     const { error } = await supabase.auth.verifyOtp({
       email,
@@ -101,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, resetPassword, signOut, verifyEmailOtp }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, resetPassword, signOut, verifyEmailOtp, resendOtp }}>
       {children}
     </AuthContext.Provider>
   );
