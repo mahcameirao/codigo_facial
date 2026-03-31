@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_to_prevent_startup_crash');
 const { createClient } = require('@supabase/supabase-js');
 
 // Variáveis carregadas diretamente via código para contornar bloqueio da Render/GitHub

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { supabase } from '@/integrations/supabase/client';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://codigo-facial-api.onrender.com',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
 });
 
 // Add a request interceptor to add the JWT token to headers
