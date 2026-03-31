@@ -31,10 +31,10 @@ const Register = () => {
             });
         } else {
             toast({
-                title: "Conta criada!",
-                description: "Verifique seu e-mail para confirmar o cadastro.",
+                title: "Conta criada e autenticada!",
+                description: "Bem-vindo(a) à plataforma.",
             });
-            navigate("/login");
+            navigate("/"); // Redireciona para a home ou dashboard onde ele pode usar a ferramenta
         }
     };
 
