@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Register = () => {
     const [name, setName] = useState("");
@@ -31,6 +32,24 @@ const Register = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
+        // Checagem se o CPF já existe
+        const { data: existingUser } = await (supabase
+            .from('profiles')
+            .select('id')
+            .eq('cpf', cpf)
+            .single() as any);
+
+        if (existingUser) {
+            setLoading(false);
+            toast({
+                variant: "destructive",
+                title: "Usuário já cadastrado",
+                description: "Este CPF já possui uma conta ativa.",
+            });
+            navigate("/login", { state: { reset: true } });
+            return;
+        }
 
         const { error } = await signUp(email, name, cpf);
         setLoading(false);
