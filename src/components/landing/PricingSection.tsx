@@ -47,9 +47,6 @@ const PricingSection = () => {
 
   const handleSubscribe = async (planName: string) => {
     if (!session) {
-      if (planName === "Pro") {
-        toast.info("Faça login para assinar o plano Pro");
-      }
       navigate("/register");
       return;
     }
