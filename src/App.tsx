@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Register from "./pages/Register";
+import Validation from "./pages/Validation";
 import Upload from "./pages/Upload";
 import Results from "./pages/Results";
 import UpdatePassword from "./pages/UpdatePassword";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/validation" element={<Validation />} />
             <Route path="/update-password" element={<UpdatePassword />} />
 
             <Route path="/upload" element={<Upload />} />

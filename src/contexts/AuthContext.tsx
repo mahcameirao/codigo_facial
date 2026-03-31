@@ -5,12 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  profile: { id: string; name: string; email: string; is_active: boolean; analysis_count?: number; plan?: string } | null;
+  profile: { id: string; name: string; email: string; cpf?: string; is_active: boolean; analysis_count?: number; plan?: string } | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string, cpf: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  verifyEmailOtp: (email: string, token: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, name, email, is_active, analysis_count, plan")
+      .select("id, name, email, cpf, is_active, analysis_count, plan")
       .eq("id", userId)
       .single();
     setProfile(data);
@@ -62,12 +63,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, cpf: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
+        data: { name, cpf },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -76,6 +77,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
+  };
+
+  const verifyEmailOtp = async (email: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup'
+    });
     return { error: error?.message ?? null };
   };
 
@@ -92,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, resetPassword, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, resetPassword, signOut, verifyEmailOtp }}>
       {children}
     </AuthContext.Provider>
   );

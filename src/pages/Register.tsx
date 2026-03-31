@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Register = () => {
     const [name, setName] = useState("");
+    const [cpf, setCpf] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -16,11 +17,23 @@ const Register = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
 
+    // Máscara simples para CPF (000.000.000-00)
+    const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        
+        setCpf(value);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await signUp(email, password, name);
+        const { error } = await signUp(email, password, name, cpf);
         setLoading(false);
 
         if (error) {
@@ -31,10 +44,10 @@ const Register = () => {
             });
         } else {
             toast({
-                title: "Conta criada e autenticada!",
-                description: "Bem-vindo(a) à plataforma.",
+                title: "Código enviado!",
+                description: "Verifique seu e-mail para validar sua conta.",
             });
-            navigate("/"); // Redireciona para a home ou dashboard onde ele pode usar a ferramenta
+            navigate("/validation", { state: { email } });
         }
     };
 
@@ -54,6 +67,17 @@ const Register = () => {
                         <div className="space-y-2">
                             <Label htmlFor="name">Nome Completo</Label>
                             <Input id="name" placeholder="Ex: Maria Silva" value={name} onChange={(e) => setName(e.target.value)} required className="bg-background/50 border-primary/20 focus:border-primary/50" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="cpf">CPF</Label>
+                            <Input 
+                                id="cpf" 
+                                placeholder="000.000.000-00" 
+                                value={cpf} 
+                                onChange={handleCpfChange} 
+                                required 
+                                className="bg-background/50 border-primary/20 focus:border-primary/50" 
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
