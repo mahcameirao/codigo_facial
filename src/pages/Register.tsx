@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const Register = () => {
@@ -15,7 +15,6 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const { signUp } = useAuth();
     const navigate = useNavigate();
-    const { toast } = useToast();
 
     // Máscara simples para CPF (000.000.000-00)
     const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,25 +28,41 @@ const Register = () => {
         setCpf(value);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+    const handleCpfBlur = async () => {
+        if (cpf.length < 14) return;
 
-        // Checagem se o CPF já existe
         const { data: existingUser } = await (supabase
             .from('profiles')
             .select('id')
             .eq('cpf', cpf)
-            .single() as any);
+            .maybeSingle() as any);
+
+        if (existingUser) {
+            toast.warning("CPF já cadastrado", {
+                description: "Este CPF já possui uma conta ativa. Direcionando para o login...",
+                duration: 3000,
+            });
+            setTimeout(() => navigate("/login"), 1500);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        // Checagem final antes de enviar
+        const { data: existingUser } = await (supabase
+            .from('profiles')
+            .select('id')
+            .eq('cpf', cpf)
+            .maybeSingle() as any);
 
         if (existingUser) {
             setLoading(false);
-            toast({
-                variant: "destructive",
-                title: "Usuário já cadastrado",
-                description: "Este CPF já possui uma conta ativa.",
+            toast.warning("CPF já cadastrado", {
+                description: "Redirecionando para o login...",
             });
-            navigate("/login", { state: { reset: true } });
+            navigate("/login");
             return;
         }
 
@@ -55,14 +70,11 @@ const Register = () => {
         setLoading(false);
 
         if (error) {
-            toast({
-                variant: "destructive",
-                title: "Erro no cadastro",
+            toast.error("Erro no cadastro", {
                 description: error,
             });
         } else {
-            toast({
-                title: "Código enviado!",
+            toast.success("Código enviado!", {
                 description: "Verifique seu e-mail para validar sua conta.",
             });
             navigate("/validation", { state: { email } });
@@ -93,6 +105,7 @@ const Register = () => {
                                 placeholder="000.000.000-00" 
                                 value={cpf} 
                                 onChange={handleCpfChange} 
+                                onBlur={handleCpfBlur}
                                 required 
                                 className="bg-background/50 border-primary/20 focus:border-primary/50" 
                             />
