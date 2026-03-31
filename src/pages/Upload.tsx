@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Upload, Image, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
+import Footer from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -197,6 +198,7 @@ const UploadPage = () => {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
