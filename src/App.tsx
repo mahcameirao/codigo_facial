@@ -9,6 +9,7 @@ import SignUp from "./pages/SignUp";
 import Register from "./pages/Register";
 import Upload from "./pages/Upload";
 import Results from "./pages/Results";
+import UpdatePassword from "./pages/UpdatePassword";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
 
             <Route path="/upload" element={<Upload />} />
             <Route path="/results" element={<Results />} />

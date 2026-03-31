@@ -12,17 +12,32 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [isResetMode, setIsResetMode] = useState(false);
+  const { signIn, resetPassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
+    if (!email.trim() || (!isResetMode && !password.trim())) {
       toast({ title: "Erro", description: "Preencha todos os campos.", variant: "destructive" });
       return;
     }
+    
     setIsLoading(true);
+
+    if (isResetMode) {
+      const { error } = await resetPassword(email.trim());
+      setIsLoading(false);
+      if (error) {
+        toast({ title: "Erro", description: error, variant: "destructive" });
+      } else {
+        toast({ title: "E-mail enviado!", description: "Cheque sua caixa de entrada para o link de recuperação." });
+        setIsResetMode(false);
+      }
+      return;
+    }
+
     const { error } = await signIn(email.trim(), password);
     setIsLoading(false);
     if (error) {
@@ -41,8 +56,12 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground font-display">Entrar</h1>
-          <p className="text-muted-foreground">Acesse sua conta do Método Leitura Facial</p>
+          <h1 className="text-3xl font-bold text-foreground font-display">
+            {isResetMode ? "Recuperar Senha" : "Entrar"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isResetMode ? "Enviaremos um link de recuperação para o seu email." : "Acesse sua conta do Método Leitura Facial"}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 bg-card p-8 rounded-xl border border-border shadow-lg">
@@ -59,27 +78,38 @@ const Login = () => {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-foreground">Senha</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-secondary border-border text-foreground pr-10"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+          {!isResetMode && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="password" className="text-foreground">Senha</Label>
+                <button 
+                  type="button" 
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => setIsResetMode(true)}
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-secondary border-border text-foreground pr-10"
+                  required={!isResetMode}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
@@ -87,16 +117,24 @@ const Login = () => {
             ) : (
               <>
                 <LogIn className="mr-2 h-4 w-4" />
-                Entrar
+                {isResetMode ? "Enviar e-mail de recuperação" : "Entrar"}
               </>
             )}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Não tem conta?{" "}
-            <Link to="/signup" className="text-primary hover:underline font-medium">
-              Cadastre-se
-            </Link>
+            {isResetMode ? (
+              <button type="button" onClick={() => setIsResetMode(false)} className="text-primary hover:underline font-medium">
+                Voltar para o Login
+              </button>
+            ) : (
+              <>
+                Não tem conta?{" "}
+                <Link to="/signup" className="text-primary hover:underline font-medium">
+                  Cadastre-se
+                </Link>
+              </>
+            )}
           </p>
         </form>
       </div>
