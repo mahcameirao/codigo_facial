@@ -131,7 +131,7 @@ const Login = () => {
               <>
                 Não tem conta?{" "}
                 <Link to="/signup" className="text-primary hover:underline font-medium">
-                  Cadastre-se
+                  Cadastre-se aqui!
                 </Link>
               </>
             )}
