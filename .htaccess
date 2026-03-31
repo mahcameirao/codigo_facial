@@ -1,17 +1,10 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /
 
-  # 1. Protege arquivos estruturais do servidor/repo que não devem estar públicos
-  RewriteRule ^(\.git|\.env|src|backend|node_modules) - [F,L]
-
-  # 2. Força o tráfego do domínio principal para dentro da pasta compilada "dist"
+  # Se o visitante acessar a raiz vazia (meusite.com/), sirva o index.html da dist
+  RewriteRule ^$ dist/index.html [L]
+  
+  # Se o visitante acessar um caminho não vazio, jogue-o dentro da pasta dist invisivelmente
   RewriteCond %{REQUEST_URI} !^/dist/
   RewriteRule ^(.*)$ dist/$1 [L]
-
-  # 3. Gerencia o roteamento do React (SPA) para carregar as páginas virtuais se a URL interna não for um arquivo/pasta real
-  RewriteCond %{REQUEST_URI} ^/dist/
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule ^dist/(.*)$ dist/index.html [L]
 </IfModule>
