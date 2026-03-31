@@ -78,7 +78,10 @@ const UploadPage = () => {
       <Navbar />
       <div className="container mx-auto px-6 pt-28 pb-16">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => {
+            navigate("/");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
