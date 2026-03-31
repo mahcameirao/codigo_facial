@@ -33,13 +33,13 @@ const Navbar = () => {
                 Perfil
               </Button>
               <Button variant="outline" size="sm" onClick={signOut}>
-                Sair
+                sair
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => navigate("/login")} className="hidden sm:inline-flex">
-                Entrar
+                entrar
               </Button>
               <Button variant="hero" size="sm" onClick={() => navigate("/register")}>
                 Criar conta
