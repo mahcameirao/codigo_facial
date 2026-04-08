@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("id, name, email, cpf, is_active, analysis_count, plan, monthly_uploads, uploads_reset_at")
       .eq("id", userId)
       .single();
+
     setProfile(data as any);
   };
 

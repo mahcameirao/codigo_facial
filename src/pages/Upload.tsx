@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Image, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Upload, Image, AlertCircle, ArrowLeft, CheckCircle2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -34,6 +34,29 @@ const UploadPage = () => {
     reader.onload = (e) => setPreview(e.target?.result as string);
     reader.readAsDataURL(f);
   }, []);
+
+  const usageStats = useMemo(() => {
+    if (!user || !profile) return null;
+    const plan = profile.plan || 'scanner';
+    let used = 0;
+    let limit: string | number = 1;
+    let label = "Scanner";
+    
+    if (plan === "scanner") {
+      used = profile.analysis_count || 0;
+      limit = 1;
+    } else {
+      const resetAt = profile.uploads_reset_at ? new Date(profile.uploads_reset_at) : null;
+      const needsReset = !resetAt || new Date() >= resetAt;
+      used = needsReset ? 0 : (profile.monthly_uploads || 0);
+
+      if (plan === "smart") { limit = 5; label = "Smart"; }
+      else if (plan === "expert") { limit = 20; label = "Expert"; }
+      else if (plan === "pro") { limit = "Ilimitado"; label = "Pro"; }
+    }
+    
+    return { plan, label, used, limit };
+  }, [user, profile]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -154,9 +177,23 @@ const UploadPage = () => {
           <h1 className="font-display text-4xl font-bold mb-3 text-center">
             Envie sua <span className="text-gradient-gold">foto</span>
           </h1>
-          <p className="text-muted-foreground text-center mb-10">
+          <p className="text-muted-foreground text-center mb-6">
             Foto frontal, boa iluminação, sem óculos escuros.
           </p>
+
+          {usageStats && (
+            <div className="flex items-center justify-center gap-3 mb-10">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-sm">
+                <Info className="w-4 h-4 text-primary" />
+                <span className="text-muted-foreground">
+                  Plano <strong className="text-foreground">{usageStats.label}</strong>:
+                </span>
+                <span className="font-semibold text-primary">
+                  {usageStats.used} / {usageStats.limit} {typeof usageStats.limit === 'number' ? 'uploads' : ''}
+                </span>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">

@@ -164,7 +164,7 @@ const PricingSection = () => {
               <Button
                 variant={plan.highlight ? "hero" : "heroOutline"}
                 className="w-full py-5"
-                disabled={loading !== null}
+                disabled={loading !== null || (session && (profile?.plan || 'scanner') === plan.key)}
                 onClick={() => handleSubscribe(plan.key)}
                 id={`btn-plan-${plan.key}`}
               >
@@ -173,6 +173,8 @@ const PricingSection = () => {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Processando...
                   </>
+                ) : session && (profile?.plan || 'scanner') === plan.key ? (
+                  "Seu Plano Atual"
                 ) : (
                   plan.cta
                 )}

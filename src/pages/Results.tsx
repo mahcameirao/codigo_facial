@@ -87,8 +87,7 @@ const ComparisonCard = ({ comparison }: { comparison: ComparisonResult }) => (
             <span>Ideal: {comparison.idealValue.toFixed(1)} cm</span>
           </div>
         </div>
-        <p className="text-sm font-medium mb-1">{comparison.description}</p>
-        <p className="text-xs text-muted-foreground">{comparison.suggestion}</p>
+        <p className="text-sm font-medium">{comparison.description}</p>
       </div>
     </div>
   </div>
