@@ -18,32 +18,41 @@ export type Database = {
         Row: {
           analysis_count: number
           created_at: string
+          cpf: string | null
           email: string
           id: string
           is_active: boolean
+          monthly_uploads: number
           name: string
           plan: string
           updated_at: string
+          uploads_reset_at: string | null
         }
         Insert: {
           analysis_count?: number
           created_at?: string
+          cpf?: string | null
           email: string
           id: string
           is_active?: boolean
+          monthly_uploads?: number
           name: string
           plan?: string
           updated_at?: string
+          uploads_reset_at?: string | null
         }
         Update: {
           analysis_count?: number
           created_at?: string
+          cpf?: string | null
           email?: string
           id?: string
           is_active?: boolean
+          monthly_uploads?: number
           name?: string
           plan?: string
           updated_at?: string
+          uploads_reset_at?: string | null
         }
         Relationships: []
       }

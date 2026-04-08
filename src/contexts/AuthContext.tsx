@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  profile: { id: string; name: string; email: string; cpf?: string; is_active: boolean; analysis_count?: number; plan?: string } | null;
+  profile: { id: string; name: string; email: string; cpf?: string; is_active: boolean; analysis_count?: number; plan?: string; monthly_uploads?: number; uploads_reset_at?: string } | null;
   loading: boolean;
   signUp: (email: string, name: string, cpf: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, name, email, cpf, is_active, analysis_count, plan")
+      .select("id, name, email, cpf, is_active, analysis_count, plan, monthly_uploads, uploads_reset_at")
       .eq("id", userId)
       .single();
     setProfile(data as any);

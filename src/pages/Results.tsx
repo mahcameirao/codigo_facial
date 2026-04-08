@@ -234,7 +234,13 @@ const ResultsPage = () => {
   const { user, profile } = useAuth();
   const imageUrl = (location.state as any)?.imageUrl as string | undefined;
 
-  const isFree = true; // TODO: implement plan check via profiles table
+  const plan = profile?.plan || 'scanner';
+
+  // Smart, Expert, Pro: libera proporções, medidas ideais, comparação e terços
+  const unlocksProportions = ['smart', 'expert', 'pro'].includes(plan);
+  // Expert e Pro: libera sugestões de maquiagem e estética
+  const unlocksMakeup = ['expert', 'pro'].includes(plan);
+
 
   const [rawMeasurements, setRawMeasurements] = useState<RawMeasurements>(MOCK_RAW);
 
@@ -304,7 +310,7 @@ const ResultsPage = () => {
                 <MeasurementRow label="Terço inferior" value={`${raw.o.toFixed(1)} cm`} />
               </div>
 
-              <BlurWrapper isLocked={isFree}>
+              <BlurWrapper isLocked={!unlocksProportions}>
                 <div className="rounded-xl border border-border bg-card/50 p-6 h-full">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -322,7 +328,7 @@ const ResultsPage = () => {
             <h2 className="font-display text-2xl font-bold mb-6">
               Análise <span className="text-gradient-gold">Comparativa</span>
             </h2>
-            <BlurWrapper isLocked={isFree}>
+            <BlurWrapper isLocked={!unlocksProportions}>
               <div className="space-y-4 mb-10">
                 {comparisons.map((comp) => (
                   <ComparisonCard key={comp.key} comparison={comp} />
@@ -330,7 +336,7 @@ const ResultsPage = () => {
               </div>
             </BlurWrapper>
 
-            <BlurWrapper isLocked={isFree}>
+            <BlurWrapper isLocked={!unlocksProportions}>
               <div className="rounded-xl border border-border bg-card/50 p-6 mb-10">
                 <h2 className="font-display text-xl font-semibold mb-5">Regra dos Terços</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
@@ -358,7 +364,7 @@ const ResultsPage = () => {
             <h2 className="font-display text-2xl font-bold mb-6">
               Sugestões <span className="text-gradient-gold">Personalizadas</span>
             </h2>
-            <BlurWrapper isLocked={isFree}>
+            <BlurWrapper isLocked={!unlocksMakeup}>
               <div className="grid grid-cols-1 gap-4 mb-10">
                 <SuggestionCard title="Maquiagem & Estética" icon={Palette} items={suggestions.aesthetic} />
               </div>
@@ -367,26 +373,29 @@ const ResultsPage = () => {
             <div id="pricing-cta" className="rounded-2xl border border-primary/30 bg-card p-8 text-center glow-gold">
               <img src={logoMarcela} alt="Marcela Cameirão" className="h-16 mx-auto mb-4 opacity-80" />
               <h2 className="font-display text-2xl font-bold mb-2">
-                {isFree ? "Liberar Acesso Pro" : "Acesso Completo Ativado"}
+                {unlocksMakeup ? "Acesso Completo Ativado" : unlocksProportions ? "Ative as Sugestões de Maquiagem" : "Libere sua Análise Completa"}
               </h2>
               <p className="text-muted-foreground mb-6">
-                {isFree
-                  ? "Assine o plano Pro para remover o desfoque e ter acesso às medidas ideais, sugestões de visagismo e relatório completo."
-                  : "Você já possui acesso completo às ferramentas de visagismo com proporção áurea."}
+                {unlocksMakeup
+                  ? "Você já possui acesso completo às ferramentas de visagismo com proporção áurea."
+                  : unlocksProportions
+                  ? "Faça upgrade para o plano Expert ou Pro para liberar as sugestões de maquiagem e estética personalizadas."
+                  : "Assine o plano Smart ou superior para desbloquear medidas ideais, análise comparativa e muito mais."}
               </p>
               <div className="flex justify-center gap-4">
-                {isFree ? (
-                  <Button variant="hero" size="lg" className="px-8" onClick={() => (document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }))}>
-                    Assinar Plano Pro - R$ 37,90
-                  </Button>
-                ) : (
+                {unlocksMakeup ? (
                   <Button variant="hero" size="lg" className="px-8" onClick={() => window.print()}>
                     <Download className="mr-2 h-5 w-5" />
                     Salvar Relatório
                   </Button>
+                ) : (
+                  <Button variant="hero" size="lg" className="px-8" onClick={() => { navigate("/"); setTimeout(() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }), 100); }}>
+                    Ver Planos
+                  </Button>
                 )}
               </div>
             </div>
+
           </div>
         </div>
       </div>

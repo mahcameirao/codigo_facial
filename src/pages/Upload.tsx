@@ -48,22 +48,83 @@ const UploadPage = () => {
     if (!file) return;
 
     if (user && profile) {
-      if ((profile.analysis_count || 0) >= 1) {
-        toast.error("Limite Atingido", {
-          description: "Você já utilizou sua análise no plano gratuito. Assine o Pro para análises ilimitadas."
-        });
-        document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
-        return;
-      }
+      const plan = profile.plan || 'scanner';
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ analysis_count: (profile.analysis_count || 0) + 1 })
-        .eq('id', user.id);
+      // --- Plano Scanner: limite vitalício de 1 upload ---
+      if (plan === 'scanner') {
+        if ((profile.analysis_count || 0) >= 1) {
+          toast.error("Limite atingido", {
+            description: "O plano Scanner permite apenas 1 análise por cadastro. Assine um plano para continuar.",
+          });
+          navigate("/#pricing");
+          window.scrollTo({ top: 0 });
+          setTimeout(() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }), 100);
+          return;
+        }
+        // Incrementa o contador vitalício do Scanner
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ analysis_count: (profile.analysis_count || 0) + 1 })
+          .eq('id', user.id);
 
-      if (updateError) {
-        toast.error("Erro", { description: "Erro ao registrar uso da análise. Tente novamente." });
-        return;
+        if (updateError) {
+          toast.error("Erro", { description: "Erro ao registrar uso. Tente novamente." });
+          return;
+        }
+      } else {
+        // --- Planos mensais: Smart, Expert, Pro ---
+        const MONTHLY_LIMITS: Record<string, number | null> = {
+          smart: 5,
+          expert: 20,
+          pro: null, // ilimitado
+        };
+
+        const limit = MONTHLY_LIMITS[plan] ?? null;
+
+        if (limit !== null) {
+          // Verifica se precisa resetar a contagem mensal
+          const resetAt = profile.uploads_reset_at ? new Date(profile.uploads_reset_at) : null;
+          const now = new Date();
+          const needsReset = !resetAt || now >= resetAt;
+
+          if (needsReset) {
+            // Reseta a contagem e agenda próximo reset para dia 1 do próximo mês
+            const nextReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const { error: resetError } = await supabase
+              .from('profiles')
+              .update({ monthly_uploads: 0, uploads_reset_at: nextReset.toISOString() })
+              .eq('id', user.id);
+
+            if (resetError) {
+              toast.error("Erro", { description: "Erro ao resetar contagem mensal. Tente novamente." });
+              return;
+            }
+            // Atualiza localmente para continuar com counts zerados
+            profile.monthly_uploads = 0;
+          }
+
+          const currentMonthlyUploads = needsReset ? 0 : (profile.monthly_uploads || 0);
+
+          if (currentMonthlyUploads >= limit) {
+            toast.error("Limite mensal atingido", {
+              description: `Seu plano ${plan.charAt(0).toUpperCase() + plan.slice(1)} permite ${limit} uploads por mês. Faça upgrade para continuar.`,
+            });
+            setTimeout(() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }), 100);
+            return;
+          }
+
+          // Incrementa o contador mensal
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ monthly_uploads: currentMonthlyUploads + 1 })
+            .eq('id', user.id);
+
+          if (updateError) {
+            toast.error("Erro", { description: "Erro ao registrar upload. Tente novamente." });
+            return;
+          }
+        }
+        // Pro com limit === null: nenhuma verificação necessária, segue direto
       }
     }
 

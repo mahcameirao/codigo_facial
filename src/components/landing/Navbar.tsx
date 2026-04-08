@@ -27,6 +27,7 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
+          <a href="#about" className="hover:text-foreground transition-colors">Quem sou</a>
           <a href="#features" className="hover:text-foreground transition-colors">Recursos</a>
           <a href="#how-it-works" className="hover:text-foreground transition-colors">Como funciona</a>
           <a href="#pricing" className="hover:text-foreground transition-colors">Preços</a>
