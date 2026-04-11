@@ -50,7 +50,7 @@ class PaymentController {
             console.log(`📡 Criando sessão no Stripe para ${email} - Plano: ${plan.name}...`);
 
             const session = await stripe.checkout.sessions.create({
-                payment_method_types: ['card'],
+                payment_method_types: ['card', 'boleto'],
                 allow_promotion_codes: true, // Ativa a caixa de cupons de desconto na tela do Stripe
                 line_items: [
                     {
@@ -69,8 +69,8 @@ class PaymentController {
                     },
                 ],
                 mode: 'subscription',
-                success_url: `${process.env.FRONTEND_URL || 'http://localhost:8080'}/results?success=true`,
-                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:8080'}/?canceled=true#pricing`,
+                success_url: `${process.env.FRONTEND_URL || 'https://codigofacial.com.br'}/results?success=true`,
+                cancel_url: `${process.env.FRONTEND_URL || 'https://codigofacial.com.br'}/?canceled=true#pricing`,
                 client_reference_id: userId,
                 customer_email: email,
                 metadata: {
